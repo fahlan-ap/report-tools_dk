@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/user_controller.dart';
+import '../controllers/user_manage_controller.dart';
 
 class UserPage extends StatelessWidget {
   const UserPage({super.key});
@@ -8,7 +8,7 @@ class UserPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Inisialisasi controller
-    final controller = Get.put(UserController());
+    final controller = Get.put(UserManageController());
 
     return Column(
       children: [
@@ -113,7 +113,7 @@ class UserPage extends StatelessWidget {
   }
 
   // --- LANGKAH 1: DIALOG AUTH (EMAIL & PASSWORD) ---
-  void _showAuthDialog(BuildContext context, UserController controller) {
+  void _showAuthDialog(BuildContext context, UserManageController controller) {
     controller.emailController.clear();
     controller.passwordController.clear();
 
@@ -165,7 +165,7 @@ class UserPage extends StatelessWidget {
   }
 
   // --- LANGKAH 2: DIALOG PROFIL (NAMA & NIP) ---
-  void _showAddProfileDialog(BuildContext context, UserController controller) {
+  void _showAddProfileDialog(BuildContext context, UserManageController controller) {
     controller.namaController.clear();
     controller.nipController.clear();
 
@@ -214,7 +214,7 @@ class UserPage extends StatelessWidget {
 
   // --- DIALOG KHUSUS EDIT (HANYA PROFIL) ---
   void _showEditProfileDialog(
-      BuildContext context, UserController controller, Map user) {
+      BuildContext context, UserManageController controller, Map user) {
     controller.namaController.text = user['nama_lengkap'] ?? '';
     controller.nipController.text = user['nip'] ?? '';
 
@@ -259,7 +259,7 @@ class UserPage extends StatelessWidget {
 
   // Dialog Konfirmasi Hapus
   void _confirmDelete(
-      BuildContext context, UserController controller, Map user) {
+      BuildContext context, UserManageController controller, Map user) {
     Get.defaultDialog(
       title: "Hapus User",
       middleText: "Apakah Anda yakin ingin menghapus ${user['nama_lengkap']}?",

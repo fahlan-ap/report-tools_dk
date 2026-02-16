@@ -1,50 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
-import 'user_service.dart';
+import '../controllers/user_controller.dart'; // Controller sisi Teacher/User
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  final AuthController _authC = Get.find<AuthController>();
-  final UserService _controller = UserService();
-
-  // Data Profil (Sesuai skema tabel public.profiles)
-  String _nama = "Memuat...";
-  String _role = "-";
-  String _nip = "-";
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchProfile();
-  }
-
-  Future<void> _fetchProfile() async {
-    final data = await _controller.getUserProfile();
-    if (mounted) {
-      setState(() {
-        if (data != null) {
-          // Menyesuaikan key dengan skema database
-          _nama = data['nama_lengkap'] ?? "Tanpa Nama";
-          _role = data['role'] ?? "User";
-          _nip = data['nip'] ?? "-";
-        } else {
-          _nama = "Data tidak ditemukan";
-        }
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Inisialisasi controller
+    final AuthController authC = Get.find<AuthController>();
+    final UserController controller = Get.find<UserController>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5FA),
       appBar: AppBar(
@@ -53,108 +20,132 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple,
+        actions: [
+          // Tambahkan tombol refresh jika ingin memuat ulang data profil manual
+          IconButton(
+            onPressed: () => controller.fetchUserProfile(),
+            icon: const Icon(Icons.refresh),
+          )
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Column(
-                children: [
-                  // --- HEADER PROFILE ---
-                  Center(
-                    child: Column(
-                      children: [
-                        const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.deepPurple,
-                          child: Icon(
-                            Icons.person,
-                            size: 50,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _nama,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "TEACHER",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+      body: Obx(() {
+        // Cek jika data sedang dimuat
+        if (controller.isLoading.value && controller.userProfile.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                  const SizedBox(height: 30),
+        // Ambil data dari RxMap di controller
+        final profile = controller.userProfile;
+        final String nama = profile['nama_lengkap'] ?? "Data tidak ditemukan";
+        final String nip = profile['nip'] ?? "-";
 
-                  // --- INFO DETAIL (Hanya Lihat) ---
-                  _buildProfileCard(
-                    icon: Icons.badge_outlined,
-                    label: "NIP",
-                    value: _nip,
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // --- TOMBOL LOGOUT ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.logout),
-                        onPressed: () {
-                          Get.defaultDialog(
-                            title: "Konfirmasi Keluar",
-                            middleText: "Anda yakin ingin keluar dari aplikasi?",
-                            textConfirm: "Ya, Keluar",
-                            textCancel: "Batal",
-                            confirmTextColor: Colors.white,
-                            buttonColor: Colors.red,
-                            onConfirm: () => _authC.logout(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade50,
-                          foregroundColor: Colors.red,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: Colors.red.shade100),
-                          ),
-                        ),
-                        label: const Text(
-                          "Keluar Aplikasi",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              // --- HEADER PROFILE ---
+              Center(
+                child: Column(
+                  children: [
+                    const CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.deepPurple,
+                      child: Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Versi Aplikasi 1.0.0",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      nama,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "TEACHER / USER",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+
+              const SizedBox(height: 30),
+
+              // --- INFO DETAIL (Reaktif dari RxMap) ---
+              _buildProfileCard(
+                icon: Icons.badge_outlined,
+                label: "NIP",
+                value: nip,
+              ),
+
+              // Anda bisa menambahkan info email dari Auth
+              _buildProfileCard(
+                icon: Icons.email_outlined,
+                label: "Email Akun",
+                value: authC.supabase.auth.currentUser?.email ?? "-",
+              ),
+
+              const SizedBox(height: 40),
+
+              // --- TOMBOL LOGOUT ---
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.logout),
+                    onPressed: () {
+                      Get.defaultDialog(
+                        title: "Konfirmasi Keluar",
+                        middleText: "Anda yakin ingin keluar dari aplikasi?",
+                        textConfirm: "Ya, Keluar",
+                        textCancel: "Batal",
+                        confirmTextColor: Colors.white,
+                        buttonColor: Colors.red,
+                        onConfirm: () => authC.logout(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.red.shade100),
+                      ),
+                    ),
+                    label: const Text(
+                      "Keluar Aplikasi",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              const Text(
+                "Versi Aplikasi 1.0.0",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
-  // Widget kartu informasi statis (Read-Only)
+  // Widget kartu informasi statis
   Widget _buildProfileCard({
     required IconData icon,
     required String label,
@@ -185,22 +176,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Icon(icon, color: Colors.deepPurple),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.grey, fontSize: 11),
                 ),
-              ),
-            ],
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

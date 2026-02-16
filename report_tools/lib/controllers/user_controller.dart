@@ -1,169 +1,231 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UserController extends GetxController {
-  final SupabaseClient supabase = Supabase.instance.client;
+  final supabase = Supabase.instance.client;
+  final ImagePicker _picker = ImagePicker();
+
+  // --- STATE MANAGEMENT ---
   var isLoading = false.obs;
-
-  // Variabel RxList untuk menampung data user (profiles) secara lokal
-  var listUser = <Map<String, dynamic>>[].obs;
-
-  // Controllers untuk Akun Login (Auth)
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-
-  // Controllers untuk Data Profil (Profiles)
-  final TextEditingController namaController = TextEditingController();
-  final TextEditingController nipController = TextEditingController();
-
-  // Variabel penampung UUID sementara dari Auth
-  String? tempUid; 
+  var listPeminjamanAktif = <Map<String, dynamic>>[].obs;
+  var userProfile = <String, dynamic>{}.obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchUsers(); // Ambil data otomatis saat controller diinisialisasi
+    fetchUserDashboard();
+    fetchUserProfile();
   }
 
-  // --- FUNGSI FETCH DATA (REFRESH) ---
-  Future<void> fetchUsers() async {
-    try {
-      isLoading.value = true;
-      
-      // Mengambil data profiles dengan role 'user'
-      final response = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'user')
-          .order('nama_lengkap', ascending: true);
+  // --- AUTH HELPER ---
+  User? get currentUser => supabase.auth.currentUser;
 
-      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
-      listUser.value = data;
+  // --- IMAGE PICKER (Kamera/Galeri) ---
+  Future<XFile?> pickImage(BuildContext context) async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Pilih Sumber Foto Bukti",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.deepPurple),
+              title: const Text("Kamera (Ambil Foto)"),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text("Galeri (Pilih Foto)"),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
 
-    } catch (e) {
-      Get.snackbar("Error", "Gagal memuat data user: $e");
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // --- LANGKAH 1: Membuat Akun Auth ---
-  Future<bool> createAuthAccount() async {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Email dan Password wajib diisi");
-      return false;
-    }
-
-    try {
-      isLoading.value = true;
-      
-      final AuthResponse res = await supabase.auth.signUp(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      if (res.user != null) {
-        tempUid = res.user!.id;
-        return true;
+    if (source != null) {
+      try {
+        // Ditambahkan imageQuality 70 agar file tidak terlalu besar saat upload
+        return await _picker.pickImage(source: source, imageQuality: 70);
+      } catch (e) {
+        Get.snackbar("Error", "Gagal membuka media: $e");
+        return null;
       }
-      return false;
+    }
+    return null;
+  }
+
+  // --- PROFILE DATA ---
+  Future<void> fetchUserProfile() async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      final res = await supabase.from('profiles').select().eq('id', user.id).single();
+      userProfile.value = res;
     } catch (e) {
-      Get.snackbar("Auth Error", "Gagal membuat akun: $e");
-      return false;
+      debugPrint("Error profile: $e");
+    }
+  }
+
+  // --- MASTER DATA ---
+  Future<List<Map<String, dynamic>>> getBarangList() async {
+    final response = await supabase
+        .from('barang')
+        .select('id, nama_barang')
+        .order('nama_barang', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<List<Map<String, dynamic>>> getSekolahList() async {
+    final response = await supabase
+        .from('sekolah')
+        .select('id, nama_sekolah')
+        .order('nama_sekolah', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  // --- DASHBOARD DATA (ACTIVE LOANS) ---
+  Future<void> fetchUserDashboard() async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      isLoading.value = true;
+      final response = await supabase
+          .from('peminjaman')
+          .select('''
+            *,
+            sekolah (nama_sekolah),
+            detail_peminjaman (
+              barang (nama_barang)
+            )
+          ''')
+          .eq('id_user', user.id)
+          .eq('status', 'berlangsung') // Hanya yang aktif
+          .order('waktu_pinjam', ascending: false);
+      
+      listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint("Error dashboard: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // --- LANGKAH 2: Mengisi Data Profiles ---
-  Future<void> saveProfile() async {
-    if (tempUid == null) return;
-
-    if (namaController.text.isEmpty || nipController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Nama dan NIP wajib diisi");
-      return;
-    }
+  // --- SUBMIT PEMINJAMAN ---
+  Future<void> submitPeminjaman({
+    required String sekolahId,
+    required List<String> barangIds,
+    required XFile fotoBukti,
+  }) async {
+    final user = currentUser;
+    if (user == null) return;
 
     try {
       isLoading.value = true;
-      await supabase.from('profiles').insert({
-        'id': tempUid, 
-        'nama_lengkap': namaController.text,
-        'nip': nipController.text,
-        'role': 'user', 
+      final fileName = 'pinjam_${DateTime.now().millisecondsSinceEpoch}_${user.id}.jpg';
+
+      // Upload Foto
+      if (kIsWeb) {
+        final bytes = await fotoBukti.readAsBytes();
+        await supabase.storage.from('bukti_peminjaman').uploadBinary(
+          fileName, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+      } else {
+        await supabase.storage.from('bukti_peminjaman').upload(fileName, File(fotoBukti.path));
+      }
+
+      final fotoUrl = supabase.storage.from('bukti_peminjaman').getPublicUrl(fileName);
+
+      // Insert Peminjaman
+      final responsePeminjaman = await supabase.from('peminjaman').insert({
+        'id_user': user.id,
+        'id_sekolah': sekolahId,
+        'waktu_pinjam': DateTime.now().toIso8601String(),
+        'foto_pinjam': fotoUrl,
+        'status': 'berlangsung',
+      }).select().single();
+
+      // Insert Detail Barang
+      final peminjamanId = responsePeminjaman['id'];
+      final List<Map<String, dynamic>> detailData = barangIds.map((barangId) {
+        return {'id_peminjaman': peminjamanId, 'id_barang': barangId};
+      }).toList();
+
+      await supabase.from('detail_peminjaman').insert(detailData);
+      
+      // Refresh Dashboard Otomatis
+      fetchUserDashboard();
+      
+    } catch (e) {
+      throw Exception("Gagal mengajukan peminjaman: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // --- SUBMIT PENGEMBALIAN ---
+  Future<void> submitPengembalian({
+    required Map<String, dynamic> loanData,
+    required XFile fotoBuktiKembali,
+  }) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      isLoading.value = true;
+      final fileName = 'kembali_${DateTime.now().millisecondsSinceEpoch}_${user.id}.jpg';
+      
+      // 1. Upload Foto Pengembalian
+      if (kIsWeb) {
+        final bytes = await fotoBuktiKembali.readAsBytes();
+        await supabase.storage.from('bukti_peminjaman').uploadBinary(
+          fileName, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+      } else {
+        await supabase.storage.from('bukti_peminjaman').upload(fileName, File(fotoBuktiKembali.path));
+      }
+      final fotoUrlKembali = supabase.storage.from('bukti_peminjaman').getPublicUrl(fileName);
+
+      // 2. Persiapkan Data Riwayat
+      final List details = loanData['detail_peminjaman'] ?? [];
+      final String daftarBarang = details.map((d) => d['barang']?['nama_barang'] ?? 'Item Dihapus').join(", ");
+
+      // 3. Masukkan ke Riwayat
+      await supabase.from('riwayat').insert({
+        'id_peminjaman': loanData['id'],
+        'nama_karyawan': userProfile['nama_lengkap'] ?? 'Tanpa Nama',
+        'nama_barang': daftarBarang,
+        'nama_sekolah': loanData['sekolah']?['nama_sekolah'] ?? 'Sekolah Dihapus',
+        'waktu_pinjam': loanData['waktu_pinjam'],
+        'waktu_kembali': DateTime.now().toIso8601String(),
+        'foto_pinjam': loanData['foto_pinjam'],
+        'foto_kembali': fotoUrlKembali,
       });
 
-      _clearAll();
-      Get.back(); // Tutup dialog profil
-      
-      // REFRESH DATA setelah simpan berhasilbar
-      fetchUsers();
-      
-      Get.snackbar("Sukses", "Akun dan Profil berhasil dibuat");
+      // 4. Hapus Peminjaman Aktif (Clean up)
+      await supabase.from('detail_peminjaman').delete().eq('id_peminjaman', loanData['id']);
+      await supabase.from('peminjaman').delete().eq('id', loanData['id']);
+
+      // Refresh Dashboard Otomatis
+      fetchUserDashboard();
+
     } catch (e) {
-      Get.snackbar("Profile Error", "Gagal menyimpan data profil: $e");
+      debugPrint("Gagal kembali: $e");
+      throw Exception("Proses pengembalian gagal.");
     } finally {
       isLoading.value = false;
     }
-  }
-
-  // Fungsi Update User (Hanya Profil)
-  Future<void> updateUser(String id) async {
-    if (namaController.text.isEmpty || nipController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Data tidak boleh kosong");
-      return;
-    }
-
-    try {
-      isLoading.value = true;
-      await supabase.from('profiles').update({
-        'nama_lengkap': namaController.text,
-        'nip': nipController.text,
-      }).eq('id', id);
-
-      _clearAll();
-      Get.back();
-      
-      // REFRESH DATA
-      fetchUsers();
-      
-      Get.snackbar("Sukses", "Data user berhasil diperbarui");
-    } catch (e) {
-      Get.snackbar("Error", "Gagal memperbarui data: $e");
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // Fungsi Hapus User
-  Future<void> deleteUser(String id) async {
-    try {
-      await supabase.from('profiles').delete().eq('id', id);
-      
-      // Update list lokal secara instan agar UI responsif
-      listUser.removeWhere((user) => user['id'] == id);
-      
-      Get.snackbar("Sukses", "User berhasil dihapus");
-    } catch (e) {
-      Get.snackbar("Error", "Gagal menghapus user: $e");
-    }
-  }
-
-  void _clearAll() {
-    emailController.clear();
-    passwordController.clear();
-    namaController.clear();
-    nipController.clear();
-    tempUid = null;
-  }
-
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    namaController.dispose();
-    nipController.dispose();
-    super.onClose();
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-import 'user_service.dart';
+import '../controllers/user_controller.dart';
 import '../widgets/photo_upload_area.dart';
 
 class ReturnForm extends StatefulWidget {
@@ -17,7 +17,7 @@ class ReturnForm extends StatefulWidget {
 }
 
 class _ReturnFormState extends State<ReturnForm> {
-  final UserService _controller = UserService();
+  final UserController _controller = UserController();
   XFile? _pickedImage;
   bool _isLoading = false;
 

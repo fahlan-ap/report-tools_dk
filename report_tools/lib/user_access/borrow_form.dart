@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-import 'user_service.dart';
+import '../controllers/user_controller.dart';
 import '../widgets/photo_upload_area.dart';
 
 class BorrowForm extends StatefulWidget {
@@ -14,7 +14,7 @@ class BorrowForm extends StatefulWidget {
 }
 
 class _BorrowFormState extends State<BorrowForm> {
-  final UserService _controller = UserService();
+  final UserController _controller = UserController();
 
   List<Map<String, dynamic>> _schoolList = [];
   List<Map<String, dynamic>> _barangListDB = [];
