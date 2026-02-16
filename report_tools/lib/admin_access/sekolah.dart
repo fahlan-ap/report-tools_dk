@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/barang_controller.dart';
+import '../controllers/sekolah_controller.dart';
 
-class BarangPage extends StatelessWidget {
-  const BarangPage({super.key});
+class SekolahPage extends StatelessWidget {
+  const SekolahPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller
-    final controller = Get.put(BarangController());
+    // Inisialisasi controller sekolah
+    final controller = Get.put(SekolahController());
 
     return Column(
       children: [
@@ -23,7 +23,7 @@ class BarangPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "Daftar Inventaris",
+                "Daftar Sekolah",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
@@ -35,10 +35,10 @@ class BarangPage extends StatelessWidget {
           ),
         ),
 
-        // --- LIST DATA BARANG (REAL-TIME) ---
+        // --- LIST DATA SEKOLAH (REAL-TIME) ---
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: controller.barangStream,
+            stream: controller.sekolahStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -46,17 +46,17 @@ class BarangPage extends StatelessWidget {
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(
-                  child: Text("Belum ada data barang di inventaris."),
+                  child: Text("Belum ada data sekolah."),
                 );
               }
 
-              final listBarang = snapshot.data!;
+              final listSekolah = snapshot.data!;
 
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: listBarang.length,
+                itemCount: listSekolah.length,
                 itemBuilder: (context, index) {
-                  final barang = listBarang[index];
+                  final sekolah = listSekolah[index];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
@@ -64,26 +64,26 @@ class BarangPage extends StatelessWidget {
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade50,
-                        child: const Icon(Icons.inventory_2, color: Colors.blue),
+                        backgroundColor: Colors.green.shade50,
+                        child: const Icon(Icons.school, color: Colors.green),
                       ),
                       title: Text(
-                        barang['nama_barang'],
+                        sekolah['nama_sekolah'],
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      subtitle: Text("ID: ${barang['id'].toString().substring(0, 8)}..."),
+                      subtitle: Text("ID: ${sekolah['id'].toString().substring(0, 8)}..."),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Tombol Edit
                           IconButton(
                             icon: const Icon(Icons.edit_outlined, color: Colors.orange),
-                            onPressed: () => _showFormDialog(context, controller, barang: barang),
+                            onPressed: () => _showFormDialog(context, controller, sekolah: sekolah),
                           ),
                           // Tombol Hapus
                           IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, controller, barang),
+                            onPressed: () => _confirmDelete(context, controller, sekolah),
                           ),
                         ],
                       ),
@@ -99,23 +99,22 @@ class BarangPage extends StatelessWidget {
   }
 
   // --- DIALOG FORM (TAMBAH & EDIT) ---
-  void _showFormDialog(BuildContext context, BarangController controller, {Map? barang}) {
-    // Jika ada data barang, berarti mode EDIT. Jika null, berarti mode TAMBAH.
-    bool isEdit = barang != null;
+  void _showFormDialog(BuildContext context, SekolahController controller, {Map? sekolah}) {
+    bool isEdit = sekolah != null;
     
     if (isEdit) {
-      controller.namaBarangController.text = barang['nama_barang'];
+      controller.namaSekolahController.text = sekolah['nama_sekolah'];
     } else {
-      controller.namaBarangController.clear();
+      controller.namaSekolahController.clear();
     }
 
     Get.dialog(
       AlertDialog(
-        title: Text(isEdit ? "Edit Nama Barang" : "Tambah Barang Baru"),
+        title: Text(isEdit ? "Edit Nama Sekolah" : "Tambah Sekolah Baru"),
         content: TextField(
-          controller: controller.namaBarangController,
+          controller: controller.namaSekolahController,
           decoration: const InputDecoration(
-            hintText: "Contoh: Laptop Asus VivoBook",
+            hintText: "Contoh: SMK Negeri 1 Jakarta",
             border: OutlineInputBorder(),
           ),
           autofocus: true,
@@ -123,19 +122,19 @@ class BarangPage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              controller.namaBarangController.clear();
+              controller.namaSekolahController.clear();
               Get.back();
             },
             child: const Text("Batal"),
           ),
           Obx(() => ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isEdit ? Colors.orange : Colors.blue,
+              backgroundColor: isEdit ? Colors.orange : Colors.green,
               foregroundColor: Colors.white,
             ),
             onPressed: controller.isLoading.value 
                 ? null 
-                : () => isEdit ? controller.updateBarang(barang['id']) : controller.addBarang(),
+                : () => isEdit ? controller.updateSekolah(sekolah['id']) : controller.addSekolah(),
             child: controller.isLoading.value 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : Text(isEdit ? "Perbarui" : "Simpan"),
@@ -147,16 +146,16 @@ class BarangPage extends StatelessWidget {
   }
 
   // --- DIALOG KONFIRMASI HAPUS ---
-  void _confirmDelete(BuildContext context, BarangController controller, Map barang) {
+  void _confirmDelete(BuildContext context, SekolahController controller, Map sekolah) {
     Get.defaultDialog(
-      title: "Hapus Barang",
-      middleText: "Apakah Anda yakin ingin menghapus '${barang['nama_barang']}'? Tindakan ini tidak dapat dibatalkan.",
+      title: "Hapus Sekolah",
+      middleText: "Hapus sekolah '${sekolah['nama_sekolah']}'? Tindakan ini tidak dapat dibatalkan.",
       textConfirm: "Ya, Hapus",
       textCancel: "Batal",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
       onConfirm: () {
-        controller.deleteBarang(barang['id']);
+        controller.deleteSekolah(sekolah['id']);
         Get.back();
       },
     );

@@ -14,24 +14,23 @@ class DashController extends GetxController {
         .map((maps) => maps);
   }
 
-  // Fungsi untuk mengambil data detail relasi secara manual (karena stream join di Supabase terbatas)
-  // Kita akan menggunakan select dengan query string untuk mendapatkan data relasi
-  Future<List<Map<String, dynamic>>> getDetailedPeminjaman() async {
+    Future<List<Map<String, dynamic>>> getDetailedPeminjaman() async {
     try {
-      final data = await supabase
+      final response = await supabase
           .from('peminjaman')
           .select('''
             *,
-            profiles:id_karyawan(nama),
-            barang:id_barang(nama_barang),
-            sekolah:id_sekolah(nama_sekolah)
+            profiles (nama_lengkap),
+            sekolah (nama_sekolah),
+            detail_peminjaman (
+              barang (nama_barang)
+            )
           ''')
-          .eq('status', 'berlangsung')
-          .order('waktu_pinjam', ascending: false);
+          .eq('status', 'berlangsung');
       
-      return List<Map<String, dynamic>>.from(data);
+      return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      print("Error Join Table: $e");
+      print("Error Debug Dashboard: $e");
       return [];
     }
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:report_tools/admin_access/barang.dart';
+import 'package:report_tools/admin_access/sekolah.dart';
+import 'package:report_tools/admin_access/user.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/dash_controller.dart';
 import '../components/custom_bottom_nav.dart';
@@ -17,13 +19,12 @@ class _AdminDashState extends State<AdminDash> {
   final authC = Get.find<AuthController>();
   int _selectedIndex = 0;
 
-  // Daftar halaman yang akan ditampilkan di area body
   final List<Widget> _pages = [
     const ActivePeminjamanList(),
     const BarangPage(),
-    const Center(child: Text("Halaman Kontrol Sekolah")),
-    const Center(child: Text("Halaman Kontrol Karyawan")),
-    const RiwayatPage(), // Memanggil fitur riwayat yang sudah dipisah
+    const SekolahPage(),
+    const UserPage(),
+    const RiwayatPage(),
   ];
 
   @override
@@ -45,7 +46,6 @@ class _AdminDashState extends State<AdminDash> {
           )
         ],
       ),
-      // Body akan berganti sesuai index, tapi BottomNav tetap menetap
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
@@ -62,7 +62,6 @@ class _AdminDashState extends State<AdminDash> {
   }
 }
 
-// Bagian ActivePeminjamanList tetap sama seperti kode Anda sebelumnya
 class ActivePeminjamanList extends StatelessWidget {
   const ActivePeminjamanList({super.key});
 
@@ -115,9 +114,16 @@ class ActivePeminjamanList extends StatelessWidget {
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   final item = data[index];
+                  
+                  // Ambil data relasi
                   final namaKaryawan = item['profiles']?['nama_lengkap'] ?? 'User';
-                  final namaBarang = item['barang']?['nama_barang'] ?? 'Barang';
                   final namaSekolah = item['sekolah']?['nama_sekolah'] ?? 'Sekolah';
+                  
+                  // Olah list barang dari join table
+                  final List detailBarang = item['detail_peminjaman'] ?? [];
+                  final String semuaBarang = detailBarang.isEmpty 
+                      ? "Tidak ada data barang" 
+                      : detailBarang.map((d) => d['barang']['nama_barang']).join(', ');
 
                   return Card(
                     elevation: 3,
@@ -131,15 +137,21 @@ class ActivePeminjamanList extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(namaKaryawan, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              const Icon(Icons.more_horiz),
+                              Text(
+                                namaKaryawan, 
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
+                              const Icon(Icons.timer, color: Colors.orange, size: 20),
                             ],
                           ),
                           const Divider(),
                           const SizedBox(height: 8),
-                          _buildDetailRow(Icons.inventory, "Barang: $namaBarang"),
+                          _buildDetailRow(Icons.inventory, "Barang: $semuaBarang"),
                           _buildDetailRow(Icons.school, "Tujuan: $namaSekolah"),
-                          _buildDetailRow(Icons.calendar_today, "Waktu: ${item['waktu_pinjam']}"),
+                          _buildDetailRow(
+                            Icons.calendar_today, 
+                            "Waktu: ${item['waktu_pinjam'].toString().substring(0, 16).replaceAll('T', ' ')}"
+                          ),
                         ],
                       ),
                     ),
@@ -155,12 +167,18 @@ class ActivePeminjamanList extends StatelessWidget {
 
   Widget _buildDetailRow(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: Colors.blue),
           const SizedBox(width: 8),
-          Text(text),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
         ],
       ),
     );
