@@ -5,21 +5,49 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BarangController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   var isLoading = false.obs;
-  
+
+  // Variabel RxList untuk menampung data barang secara lokal
+  var listBarang = <Map<String, dynamic>>[].obs;
+
   // Controller untuk Input Text di Pop-up
   final TextEditingController namaBarangController = TextEditingController();
 
-  Stream<List<Map<String, dynamic>>> get barangStream {
-    return supabase
-        .from('barang')
-        .stream(primaryKey: ['id'])
-        .order('nama_barang', ascending: true);
+  @override
+  void onInit() {
+    super.onInit();
+    fetchBarang(); // Ambil data otomatis saat controller dimuat
   }
 
-  // FUNGSI TAMBAH BARANG
+  // --- FUNGSI FETCH DATA (REFRESH) ---
+  Future<void> fetchBarang() async {
+    try {
+      isLoading.value = true;
+      
+      final response = await supabase
+          .from('barang')
+          .select('*')
+          .order('nama_barang', ascending: true);
+
+      // Konversi hasil ke List Map dan update RxList
+      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
+      listBarang.value = data;
+
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Gagal mengambil data barang: $e",
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Fungsi Tambah Barang
   Future<void> addBarang() async {
     if (namaBarangController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Nama barang tidak boleh kosong");
+      Get.snackbar("Peringatan", "Data tidak boleh kosong");
       return;
     }
 
@@ -28,11 +56,17 @@ class BarangController extends GetxController {
       await supabase.from('barang').insert({
         'nama_barang': namaBarangController.text,
       });
+
+      namaBarangController.clear();
+      Get.back();
       
-      namaBarangController.clear(); // Bersihkan input setelah sukses
-      Get.back(); // Tutup Pop-up
-      Get.snackbar("Sukses", "Barang berhasil ditambahkan", 
-          snackPosition: SnackPosition.BOTTOM);
+      // Refresh data agar list terupdate otomatis
+      fetchBarang();
+      
+      Get.snackbar(
+        "Sukses",
+        "Barang berhasil ditambahkan",
+      );
     } catch (e) {
       Get.snackbar("Error", "Gagal menambah barang: $e");
     } finally {
@@ -40,23 +74,32 @@ class BarangController extends GetxController {
     }
   }
 
-  // FUNGSI EDIT BARANG
+  // Fungsi Edit Barang
   Future<void> updateBarang(String id) async {
     if (namaBarangController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Nama barang tidak boleh kosong");
+      Get.snackbar("Peringatan", "Data tidak boleh kosong");
       return;
     }
 
     try {
       isLoading.value = true;
-      await supabase.from('barang').update({
-        'nama_barang': namaBarangController.text,
-      }).eq('id', id); // Filter berdasarkan ID barang yang diedit
-      
+      await supabase
+          .from('barang')
+          .update({
+            'nama_barang': namaBarangController.text,
+          })
+          .eq('id', id);
+
       namaBarangController.clear();
-      Get.back(); // Tutup dialog
-      Get.snackbar("Sukses", "Data barang berhasil diperbarui", 
-          snackPosition: SnackPosition.BOTTOM);
+      Get.back();
+      
+      // Refresh data agar list terupdate otomatis
+      fetchBarang();
+
+      Get.snackbar(
+        "Sukses",
+        "Data barang berhasil diperbarui",
+      );
     } catch (e) {
       Get.snackbar("Error", "Gagal memperbarui barang: $e");
     } finally {
@@ -64,12 +107,17 @@ class BarangController extends GetxController {
     }
   }
 
+  // Fungsi Hapus Barang
   Future<void> deleteBarang(String id) async {
     try {
       await supabase.from('barang').delete().eq('id', id);
+      
+      // Update list lokal secara langsung agar UI responsif
+      listBarang.removeWhere((item) => item['id'] == id);
+      
       Get.snackbar("Sukses", "Barang berhasil dihapus");
     } catch (e) {
-      Get.snackbar("Error", "Gagal menghapus barang: $e");
+      Get.snackbar("Gagal", "Gagal menghapus barang: $e");
     }
   }
 

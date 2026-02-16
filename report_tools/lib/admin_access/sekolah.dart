@@ -15,84 +15,98 @@ class SekolahPage extends StatelessWidget {
         // --- HEADER HALAMAN ---
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 "Daftar Sekolah",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                onPressed: () => _showFormDialog(context, controller),
-                icon: const Icon(Icons.add),
-                label: const Text("Tambah"),
+              // Menggabungkan tombol Tambah dan Refresh
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showFormDialog(context, controller),
+                    icon: const Icon(Icons.add),
+                    label: const Text("Tambah"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // TOMBOL REFRESH
+                  IconButton(
+                    onPressed: () => controller.fetchSekolah(),
+                    icon: const Icon(Icons.refresh, color: Colors.deepPurple),
+                    tooltip: "Muat ulang data",
+                  ),
+                ],
               ),
             ],
           ),
         ),
 
-        // --- LIST DATA SEKOLAH (REAL-TIME) ---
+        // --- LIST DATA SEKOLAH (MENGGUNAKAN OBX) ---
         Expanded(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: controller.sekolahStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
-                  child: Text("Belum ada data sekolah."),
-                );
-              }
-
-              final listSekolah = snapshot.data!;
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: listSekolah.length,
-                itemBuilder: (context, index) {
-                  final sekolah = listSekolah[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.green.shade50,
-                        child: const Icon(Icons.school, color: Colors.green),
-                      ),
-                      title: Text(
-                        sekolah['nama_sekolah'],
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text("ID: ${sekolah['id'].toString().substring(0, 8)}..."),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Tombol Edit
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: Colors.orange),
-                            onPressed: () => _showFormDialog(context, controller, sekolah: sekolah),
-                          ),
-                          // Tombol Hapus
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, controller, sekolah),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+          child: Obx(() {
+            // Loading state saat list masih kosong
+            if (controller.isLoading.value && controller.listSekolah.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.deepPurple),
               );
-            },
-          ),
+            }
+
+            // Empty state
+            if (controller.listSekolah.isEmpty) {
+              return const Center(
+                child: Text("Belum ada data sekolah."),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.listSekolah.length,
+              itemBuilder: (context, index) {
+                final sekolah = controller.listSekolah[index];
+                return Card(
+                  color: Colors.white,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.green.shade50,
+                      child: const Icon(Icons.school, color: Colors.green),
+                    ),
+                    title: Text(
+                      sekolah['nama_sekolah'] ?? "-",
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      "ID: ${sekolah['id'].toString().substring(0, 8)}...",
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Tombol Edit
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: Colors.orange),
+                          onPressed: () => _showFormDialog(context, controller, sekolah: sekolah),
+                        ),
+                        // Tombol Hapus
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          onPressed: () => _confirmDelete(context, controller, sekolah),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ],
     );

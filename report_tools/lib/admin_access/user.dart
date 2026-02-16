@@ -7,90 +7,106 @@ class UserPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Inisialisasi controller
     final controller = Get.put(UserController());
 
     return Column(
       children: [
-        // --- HEADER ---
+        // --- HEADER HALAMAN ---
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 "Manajemen User",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                onPressed: () => _showAuthDialog(context, controller),
-                icon: const Icon(Icons.person_add),
-                label: const Text("Tambah User"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
+              // Barisan tombol di sebelah kanan
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showAuthDialog(context, controller),
+                    icon: const Icon(Icons.add),
+                    label: const Text("Tambah"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // TOMBOL REFRESH
+                  IconButton(
+                    onPressed: () => controller.fetchUsers(),
+                    icon: const Icon(Icons.refresh, color: Colors.deepPurple),
+                    tooltip: "Muat ulang data",
+                  ),
+                ],
               ),
             ],
           ),
         ),
 
-        // --- LIST USER ---
+        // --- LIST USER (MENGGUNAKAN OBX) ---
         Expanded(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: controller.userStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              
-              final users = snapshot.data ?? [];
-              
-              if (users.isEmpty) {
-                return const Center(child: Text("Belum ada user dengan role 'user'"));
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade50,
-                        child: const Icon(Icons.person, color: Colors.blue),
-                      ),
-                      title: Text(
-                        user['nama_lengkap'] ?? '-',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text("NIP: ${user['nip'] ?? '-'}"),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.orange),
-                            onPressed: () => _showEditProfileDialog(context, controller, user),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, controller, user),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+          child: Obx(() {
+            // Tampilkan loading jika data sedang diambil dan list masih kosong
+            if (controller.isLoading.value && controller.listUser.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.deepPurple),
               );
-            },
-          ),
+            }
+
+            // Jika data kosong
+            if (controller.listUser.isEmpty) {
+              return const Center(
+                child: Text("Belum ada user dengan role 'user'"),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.listUser.length,
+              itemBuilder: (context, index) {
+                final user = controller.listUser[index];
+                return Card(
+                  color: Colors.white,
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue.shade50,
+                      child: const Icon(Icons.person, color: Colors.blue),
+                    ),
+                    title: Text(
+                      user['nama_lengkap'] ?? '-',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("NIP: ${user['nip'] ?? '-'}"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Tombol Edit
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.orange),
+                          onPressed: () =>
+                              _showEditProfileDialog(context, controller, user),
+                        ),
+                        // Tombol Hapus
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _confirmDelete(context, controller, user),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ],
     );
@@ -112,11 +128,13 @@ class UserPage extends StatelessWidget {
             const SizedBox(height: 15),
             TextField(
               controller: controller.emailController,
-              decoration: const InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email)),
+              decoration: const InputDecoration(
+                  labelText: "Email", prefixIcon: Icon(Icons.email)),
             ),
             TextField(
               controller: controller.passwordController,
-              decoration: const InputDecoration(labelText: "Password", prefixIcon: Icon(Icons.lock)),
+              decoration: const InputDecoration(
+                  labelText: "Password", prefixIcon: Icon(Icons.lock)),
               obscureText: true,
             ),
           ],
@@ -124,17 +142,23 @@ class UserPage extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text("Batal")),
           Obx(() => ElevatedButton(
-            onPressed: controller.isLoading.value 
-                ? null 
-                : () async {
-                    bool success = await controller.createAuthAccount();
-                    if (success) {
-                      Get.back(); // Tutup dialog Auth
-                      _showAddProfileDialog(context, controller); // Buka dialog Profil
-                    }
-                  },
-            child: const Text("Lanjut"),
-          )),
+                onPressed: controller.isLoading.value
+                    ? null
+                    : () async {
+                        bool success = await controller.createAuthAccount();
+                        if (success) {
+                          Get.back(); // Tutup dialog Auth
+                          _showAddProfileDialog(context, controller); // Buka Profil
+                        }
+                      },
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text("Lanjut"),
+              )),
         ],
       ),
     );
@@ -156,29 +180,41 @@ class UserPage extends StatelessWidget {
             const SizedBox(height: 15),
             TextField(
               controller: controller.namaController,
-              decoration: const InputDecoration(labelText: "Nama Lengkap", prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(
+                  labelText: "Nama Lengkap", prefixIcon: Icon(Icons.person)),
             ),
             TextField(
               controller: controller.nipController,
-              decoration: const InputDecoration(labelText: "NIP", prefixIcon: Icon(Icons.badge)),
+              decoration: const InputDecoration(
+                  labelText: "NIP", prefixIcon: Icon(Icons.badge)),
               keyboardType: TextInputType.number,
             ),
           ],
         ),
         actions: [
           Obx(() => ElevatedButton(
-            onPressed: controller.isLoading.value ? null : () => controller.saveProfile(),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-            child: const Text("Simpan Semua"),
-          )),
+                onPressed: controller.isLoading.value
+                    ? null
+                    : () => controller.saveProfile(),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text("Simpan Semua"),
+              )),
         ],
       ),
-      barrierDismissible: false, // User tidak boleh klik di luar agar UUID tidak hilang
+      barrierDismissible: false,
     );
   }
 
   // --- DIALOG KHUSUS EDIT (HANYA PROFIL) ---
-  void _showEditProfileDialog(BuildContext context, UserController controller, Map user) {
+  void _showEditProfileDialog(
+      BuildContext context, UserController controller, Map user) {
     controller.namaController.text = user['nama_lengkap'] ?? '';
     controller.nipController.text = user['nip'] ?? '';
 
@@ -191,11 +227,13 @@ class UserPage extends StatelessWidget {
           children: [
             TextField(
               controller: controller.namaController,
-              decoration: const InputDecoration(labelText: "Nama Lengkap", prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(
+                  labelText: "Nama Lengkap", prefixIcon: Icon(Icons.person)),
             ),
             TextField(
               controller: controller.nipController,
-              decoration: const InputDecoration(labelText: "NIP", prefixIcon: Icon(Icons.badge)),
+              decoration: const InputDecoration(
+                  labelText: "NIP", prefixIcon: Icon(Icons.badge)),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -203,16 +241,25 @@ class UserPage extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text("Batal")),
           Obx(() => ElevatedButton(
-            onPressed: controller.isLoading.value ? null : () => controller.updateUser(user['id']),
-            child: const Text("Perbarui"),
-          )),
+                onPressed: controller.isLoading.value
+                    ? null
+                    : () => controller.updateUser(user['id']),
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text("Perbarui"),
+              )),
         ],
       ),
     );
   }
 
   // Dialog Konfirmasi Hapus
-  void _confirmDelete(BuildContext context, UserController controller, Map user) {
+  void _confirmDelete(
+      BuildContext context, UserController controller, Map user) {
     Get.defaultDialog(
       title: "Hapus User",
       middleText: "Apakah Anda yakin ingin menghapus ${user['nama_lengkap']}?",

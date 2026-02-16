@@ -34,13 +34,11 @@ class AuthController extends GetxController {
       Get.snackbar(
         'Login Gagal',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
       Get.snackbar(
         'Error',
         'Terjadi kesalahan tidak terduga',
-        snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
       isLoading.value = false;

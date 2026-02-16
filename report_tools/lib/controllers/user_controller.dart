@@ -6,6 +6,9 @@ class UserController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   var isLoading = false.obs;
 
+  // Variabel RxList untuk menampung data user (profiles) secara lokal
+  var listUser = <Map<String, dynamic>>[].obs;
+
   // Controllers untuk Akun Login (Auth)
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -17,13 +20,32 @@ class UserController extends GetxController {
   // Variabel penampung UUID sementara dari Auth
   String? tempUid; 
 
-  // Stream data khusus user (filter role: user)
-  Stream<List<Map<String, dynamic>>> get userStream {
-    return supabase
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .eq('role', 'user')
-        .order('nama_lengkap', ascending: true);
+  @override
+  void onInit() {
+    super.onInit();
+    fetchUsers(); // Ambil data otomatis saat controller diinisialisasi
+  }
+
+  // --- FUNGSI FETCH DATA (REFRESH) ---
+  Future<void> fetchUsers() async {
+    try {
+      isLoading.value = true;
+      
+      // Mengambil data profiles dengan role 'user'
+      final response = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'user')
+          .order('nama_lengkap', ascending: true);
+
+      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
+      listUser.value = data;
+
+    } catch (e) {
+      Get.snackbar("Error", "Gagal memuat data user: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // --- LANGKAH 1: Membuat Akun Auth ---
@@ -36,14 +58,13 @@ class UserController extends GetxController {
     try {
       isLoading.value = true;
       
-      // Mendaftarkan akun ke sistem Autentikasi Supabase
       final AuthResponse res = await supabase.auth.signUp(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       if (res.user != null) {
-        tempUid = res.user!.id; // Menangkap UUID unik untuk relasi profiles
+        tempUid = res.user!.id;
         return true;
       }
       return false;
@@ -57,10 +78,7 @@ class UserController extends GetxController {
 
   // --- LANGKAH 2: Mengisi Data Profiles ---
   Future<void> saveProfile() async {
-    if (tempUid == null) {
-      Get.snackbar("Error", "ID User tidak ditemukan. Ulangi langkah pertama.");
-      return;
-    }
+    if (tempUid == null) return;
 
     if (namaController.text.isEmpty || nipController.text.isEmpty) {
       Get.snackbar("Peringatan", "Nama dan NIP wajib diisi");
@@ -69,16 +87,19 @@ class UserController extends GetxController {
 
     try {
       isLoading.value = true;
-      // Memasukkan data ke tabel profiles menggunakan UUID dari Auth
       await supabase.from('profiles').insert({
         'id': tempUid, 
         'nama_lengkap': namaController.text,
-        'nip': nipController.text, //
-        'role': 'user', //
+        'nip': nipController.text,
+        'role': 'user', 
       });
 
       _clearAll();
-      Get.back(); // Menutup dialog profil
+      Get.back(); // Tutup dialog profil
+      
+      // REFRESH DATA setelah simpan berhasilbar
+      fetchUsers();
+      
       Get.snackbar("Sukses", "Akun dan Profil berhasil dibuat");
     } catch (e) {
       Get.snackbar("Profile Error", "Gagal menyimpan data profil: $e");
@@ -103,6 +124,10 @@ class UserController extends GetxController {
 
       _clearAll();
       Get.back();
+      
+      // REFRESH DATA
+      fetchUsers();
+      
       Get.snackbar("Sukses", "Data user berhasil diperbarui");
     } catch (e) {
       Get.snackbar("Error", "Gagal memperbarui data: $e");
@@ -111,10 +136,14 @@ class UserController extends GetxController {
     }
   }
 
-  // Fungsi Hapus User (Menghapus profil, namun akun Auth tetap ada di Supabase Auth)
+  // Fungsi Hapus User
   Future<void> deleteUser(String id) async {
     try {
       await supabase.from('profiles').delete().eq('id', id);
+      
+      // Update list lokal secara instan agar UI responsif
+      listUser.removeWhere((user) => user['id'] == id);
+      
       Get.snackbar("Sukses", "User berhasil dihapus");
     } catch (e) {
       Get.snackbar("Error", "Gagal menghapus user: $e");

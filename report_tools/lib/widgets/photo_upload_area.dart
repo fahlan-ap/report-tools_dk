@@ -11,26 +11,45 @@ class PhotoUploadArea extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150,
+        height: 160,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.deepPurple.withOpacity(0.02), // Background tipis
           border: Border.all(
             color: Colors.deepPurple.withOpacity(0.3),
-            style: BorderStyle.solid,
+            style: BorderStyle.solid, // Bisa diganti Dash dengan Package lain, tapi solid pun oke
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.camera_alt_outlined,
-              size: 40,
-              color: Colors.deepPurple.withOpacity(0.5),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.add_a_photo_outlined, // Icon lebih representatif
+                size: 32,
+                color: Colors.deepPurple,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(label, style: TextStyle(color: Colors.grey[600])),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.deepPurple.shade700,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Format: JPG, PNG (Maks. 5MB)",
+              style: TextStyle(color: Colors.grey, fontSize: 11),
+            ),
           ],
         ),
       ),

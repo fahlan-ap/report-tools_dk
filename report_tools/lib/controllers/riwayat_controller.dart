@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 class RiwayatController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   
-  // State untuk menyimpan data yang sudah dikelompokkan
+  // State untuk menyimpan data yang sudah dikelompokkan berdasarkan tanggal
   var groupedRiwayat = <String, List<Map<String, dynamic>>>{}.obs;
   var isLoading = false.obs;
 
@@ -19,19 +19,17 @@ class RiwayatController extends GetxController {
     try {
       isLoading.value = true;
       
-      // Ambil data 7 hari terakhir untuk audit mingguan
-      final dateLimit = DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
+      final user = supabase.auth.currentUser;
+      if (user == null) return;
 
+      // Ambil data dari tabel 'riwayat'
+      // Kita tidak butuh join profiles/sekolah/barang karena sudah tersimpan sebagai teks
       final response = await supabase
-          .from('peminjaman')
-          .select('''
-            *,
-            profiles:id_user(nama_lengkap),
-            sekolah:id_sekolah(nama_sekolah),
-            detail_peminjaman(barang(nama_barang))
-          ''')
-          .eq('status', 'selesai')
-          .gte('waktu_kembali', dateLimit)
+          .from('riwayat')
+          .select('*')
+          // Jika ingin membatasi hanya riwayat milik user yang login, 
+          // pastikan tabel riwayat memiliki kolom id_user. 
+          // Jika untuk Admin/Audit (semua data), hapus filter id_user.
           .order('waktu_kembali', ascending: false);
 
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
@@ -40,7 +38,9 @@ class RiwayatController extends GetxController {
       Map<String, List<Map<String, dynamic>>> tempGrouped = {};
       
       for (var item in data) {
-        DateTime date = DateTime.parse(item['waktu_kembali']);
+        if (item['waktu_kembali'] == null) continue;
+        
+        DateTime date = DateTime.parse(item['waktu_kembali']).toLocal();
         // Format: "Senin, 16 Februari 2026"
         String formattedDate = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(date);
         
@@ -52,7 +52,10 @@ class RiwayatController extends GetxController {
 
       groupedRiwayat.value = tempGrouped;
     } catch (e) {
-      Get.snackbar("Error", "Gagal mengambil riwayat: $e");
+      Get.snackbar(
+        "Error", 
+        "Gagal mengambil data riwayat: $e",
+      );
     } finally {
       isLoading.value = false;
     }

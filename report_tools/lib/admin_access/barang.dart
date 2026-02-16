@@ -15,84 +15,94 @@ class BarangPage extends StatelessWidget {
         // --- HEADER HALAMAN ---
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 "Daftar Inventaris",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                onPressed: () => _showFormDialog(context, controller),
-                icon: const Icon(Icons.add),
-                label: const Text("Tambah"),
+              // Menggabungkan tombol Tambah dan Refresh dalam Row
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => _showFormDialog(context, controller),
+                    icon: const Icon(Icons.add),
+                    label: const Text("Tambah"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8), // Jarak antar tombol
+                  // TOMBOL REFRESH
+                  IconButton(
+                    onPressed: () => controller.fetchBarang(),
+                    icon: const Icon(Icons.refresh, color: Colors.deepPurple),
+                    tooltip: "Muat ulang data",
+                  ),
+                ],
               ),
             ],
           ),
         ),
 
-        // --- LIST DATA BARANG (REAL-TIME) ---
+        // --- LIST DATA BARANG (MENGGUNAKAN OBX) ---
         Expanded(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: controller.barangStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          child: Obx(() {
+            // Tampilkan loading jika data sedang diambil dan list masih kosong
+            if (controller.isLoading.value && controller.listBarang.isEmpty) {
+              return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+            }
 
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
-                  child: Text("Belum ada data barang di inventaris."),
-                );
-              }
-
-              final listBarang = snapshot.data!;
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: listBarang.length,
-                itemBuilder: (context, index) {
-                  final barang = listBarang[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade50,
-                        child: const Icon(Icons.inventory_2, color: Colors.blue),
-                      ),
-                      title: Text(
-                        barang['nama_barang'],
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text("ID: ${barang['id'].toString().substring(0, 8)}..."),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Tombol Edit
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: Colors.orange),
-                            onPressed: () => _showFormDialog(context, controller, barang: barang),
-                          ),
-                          // Tombol Hapus
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, controller, barang),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            // Jika data kosong
+            if (controller.listBarang.isEmpty) {
+              return const Center(
+                child: Text("Belum ada data barang di inventaris."),
               );
-            },
-          ),
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.listBarang.length,
+              itemBuilder: (context, index) {
+                final barang = controller.listBarang[index];
+                return Card(
+                  color: Colors.white,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue.shade50,
+                      child: const Icon(Icons.inventory_2, color: Colors.blue),
+                    ),
+                    title: Text(
+                      barang['nama_barang'] ?? "-",
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text("ID: ${barang['id'].toString().substring(0, 8)}..."),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Tombol Edit
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: Colors.orange),
+                          onPressed: () => _showFormDialog(context, controller, barang: barang),
+                        ),
+                        // Tombol Hapus
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          onPressed: () => _confirmDelete(context, controller, barang),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ],
     );
@@ -100,7 +110,6 @@ class BarangPage extends StatelessWidget {
 
   // --- DIALOG FORM (TAMBAH & EDIT) ---
   void _showFormDialog(BuildContext context, BarangController controller, {Map? barang}) {
-    // Jika ada data barang, berarti mode EDIT. Jika null, berarti mode TAMBAH.
     bool isEdit = barang != null;
     
     if (isEdit) {

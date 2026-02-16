@@ -14,7 +14,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController _authC = Get.find<AuthController>();
   final UserService _controller = UserService();
 
-  // Data Profil
+  // Data Profil (Sesuai skema tabel public.profiles)
   String _nama = "Memuat...";
   String _role = "-";
   String _nip = "-";
@@ -31,8 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() {
         if (data != null) {
+          // Menyesuaikan key dengan skema database
           _nama = data['nama_lengkap'] ?? "Tanpa Nama";
-          _role = data['role'] ?? "Staff";
+          _role = data['role'] ?? "Karyawan";
           _nip = data['nip'] ?? "-";
         } else {
           _nama = "Data tidak ditemukan";
@@ -40,131 +41,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  // --- LOGIKA GANTI PASSWORD ---
-  void _showChangePasswordDialog() {
-    final TextEditingController passController = TextEditingController();
-    final TextEditingController confirmController = TextEditingController();
-    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-    bool isObscure = true;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text("Ganti Password"),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text("Masukkan password baru anda."),
-                    const SizedBox(height: 16),
-
-                    // Input Password Baru
-                    TextFormField(
-                      controller: passController,
-                      obscureText: isObscure,
-                      decoration: InputDecoration(
-                        labelText: "Password Baru",
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: Colors.deepPurple,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            isObscure ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed:
-                              () =>
-                                  setStateDialog(() => isObscure = !isObscure),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return "Minimal 6 karakter";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Input Konfirmasi Password
-                    TextFormField(
-                      controller: confirmController,
-                      obscureText: isObscure,
-                      decoration: InputDecoration(
-                        labelText: "Ulangi Password",
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: Colors.deepPurple,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value != passController.text) {
-                          return "Password tidak sama";
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    "Batal",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                  ),
-                  onPressed: () async {
-                    if (formKey.currentState!.validate()) {
-                      try {
-                        // Panggil fungsi di ControllerService
-                        await _controller.updatePassword(passController.text);
-
-                        Navigator.pop(context); // Tutup Dialog
-                        Get.snackbar(
-                          "Sukses",
-                          "Password berhasil diperbarui!",
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                        );
-                      } catch (e) {
-                        Get.snackbar(
-                          "Gagal",
-                          "Terjadi kesalahan: $e",
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                      }
-                    }
-                  },
-                  child: const Text(
-                    "Simpan",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 
   @override
@@ -178,99 +54,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple,
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  children: [
-                    // --- HEADER PROFILE ---
-                    Center(
-                      child: Column(
-                        children: [
-                          const CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.deepPurple,
-                            child: Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.white,
-                            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  // --- HEADER PROFILE ---
+                  Center(
+                    child: Column(
+                      children: [
+                        const CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.deepPurple,
+                          child: Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _nama,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _nama,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "$_role  |  NIP: $_nip",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "TEACHER",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            letterSpacing: 1.1,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                    // --- MENU OPTIONS (Edit Data Diri SUDAH DIHAPUS) ---
+                  // --- INFO DETAIL (Hanya Lihat) ---
+                  _buildProfileCard(
+                    icon: Icons.badge_outlined,
+                    label: "NIP",
+                    value: _nip,
+                  ),
 
-                    // Menu Ganti Password (Sekarang ada fungsinya)
-                    _buildProfileMenu(
-                      icon: Icons.lock_outline,
-                      title: "Ganti Password",
-                      onTap: _showChangePasswordDialog, // Panggil fungsi dialog
-                    ),
+                  const SizedBox(height: 40),
 
-                    const SizedBox(height: 20),
-
-                    // --- TOMBOL LOGOUT ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => _authC.logout(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade50,
-                            foregroundColor: Colors.red,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                  // --- TOMBOL LOGOUT ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.logout),
+                        onPressed: () {
+                          Get.defaultDialog(
+                            title: "Konfirmasi Keluar",
+                            middleText: "Anda yakin ingin keluar dari aplikasi?",
+                            textConfirm: "Ya, Keluar",
+                            textCancel: "Batal",
+                            confirmTextColor: Colors.white,
+                            buttonColor: Colors.red,
+                            onConfirm: () => _authC.logout(),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade50,
+                          foregroundColor: Colors.red,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.red.shade100),
                           ),
-                          child: const Text("Keluar Aplikasi"),
+                        ),
+                        label: const Text(
+                          "Keluar Aplikasi",
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Versi Aplikasi 1.0.0",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Versi Aplikasi 1.0.0",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
               ),
+            ),
     );
   }
 
-  Widget _buildProfileMenu({
+  // Widget kartu informasi statis (Read-Only)
+  Widget _buildProfileCard({
     required IconData icon,
-    required String title,
-    required VoidCallback onTap,
+    required String label,
+    required String value,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -282,22 +174,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.deepPurple.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.deepPurple),
           ),
-          child: Icon(icon, color: Colors.deepPurple),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Colors.grey,
-        ),
-        onTap: onTap,
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

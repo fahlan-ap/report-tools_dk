@@ -1,12 +1,11 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-import 'user_service.dart'; // Import Controller Baru
+import 'user_service.dart';
 import '../widgets/photo_upload_area.dart';
 
-// UBAH NAMA CLASS DI SINI
 class BorrowForm extends StatefulWidget {
   const BorrowForm({super.key});
 
@@ -16,9 +15,7 @@ class BorrowForm extends StatefulWidget {
 
 class _BorrowFormState extends State<BorrowForm> {
   final UserService _controller = UserService();
-  final ImagePicker _picker = ImagePicker();
 
-  // Data Pilihan
   List<Map<String, dynamic>> _schoolList = [];
   List<Map<String, dynamic>> _barangListDB = [];
 
@@ -33,6 +30,7 @@ class _BorrowFormState extends State<BorrowForm> {
     _loadInitialData();
   }
 
+  // Memastikan data sekolah dan barang diambil sesuai tabel public.sekolah & public.barang
   Future<void> _loadInitialData() async {
     try {
       final schools = await _controller.getSekolahList();
@@ -42,62 +40,48 @@ class _BorrowFormState extends State<BorrowForm> {
         _barangListDB = items;
       });
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat data: $e");
+      Get.snackbar("Error", "Gagal memuat data: $e", 
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  // Menggunakan fungsi pickImage dari UserService (Modal BottomSheet ala DTomato)
+  Future<void> _handlePickImage() async {
+    final XFile? image = await _controller.pickImage(context);
+    if (image != null) {
+      setState(() => _pickedImage = image);
     }
   }
 
   Future<void> _submitForm() async {
-    if (_selectedSchoolId == null ||
-        _selectedBarangIds.isEmpty ||
-        _pickedImage == null) {
-      Get.snackbar(
-        "Peringatan",
-        "Sekolah, Barang, dan Foto Bukti wajib diisi!",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+    // Validasi input sesuai kolom NOT NULL di database
+    if (_selectedSchoolId == null || _selectedBarangIds.isEmpty || _pickedImage == null) {
+      Get.snackbar("Peringatan", "Sekolah, Barang, dan Foto Bukti wajib diisi!", 
+      backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
 
     setState(() => _isLoading = true);
-
     try {
-      // Konversi XFile ke File (Logic Mobile) sudah ditangani di controller
-
+      // Mengirim data ke controller. 
+      // id_user akan diambil otomatis dari auth.currentUser.id di dalam service
       await _controller.submitPeminjaman(
         sekolahId: _selectedSchoolId!,
         barangIds: _selectedBarangIds,
         fotoBukti: _pickedImage!,
       );
 
-      Get.back(); // Tutup halaman form
-      Get.snackbar(
-        "Berhasil",
-        "Data peminjaman tersimpan!",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      Get.back();
+      Get.snackbar("Berhasil", "Peminjaman berhasil diajukan!", 
+      backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar(
-        "Gagal",
-        "Terjadi kesalahan: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar("Gagal", "Terjadi kesalahan database: $e", 
+      backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 50,
-    );
-    if (image != null) setState(() => _pickedImage = image);
-  }
-
-  // --- LOGIKA MULTI-SELECT BARANG ---
   void _showItemSelectionDialog() {
     showDialog(
       context: context,
@@ -106,39 +90,40 @@ class _BorrowFormState extends State<BorrowForm> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               title: const Text("Pilih Barang"),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children:
-                      _barangListDB.map((item) {
-                        final id = item['id'] as String;
-                        final nama = item['nama_barang'] as String;
-                        final isSelected = _selectedBarangIds.contains(id);
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _barangListDB.length,
+                  itemBuilder: (context, index) {
+                    final item = _barangListDB[index];
+                    final id = item['id'] as String; // id berbentuk UUID String
+                    final isSelected = _selectedBarangIds.contains(id);
 
-                        return CheckboxListTile(
-                          value: isSelected,
-                          title: Text(nama),
-                          activeColor: Colors.deepPurple,
-                          onChanged: (bool? checked) {
-                            setStateDialog(() {
-                              if (checked == true) {
-                                _selectedBarangIds.add(id);
-                              } else {
-                                _selectedBarangIds.remove(id);
-                              }
-                            });
-                            setState(
-                              () {},
-                            ); // Update tampilan Chip di halaman utama
-                          },
-                        );
-                      }).toList(),
+                    return CheckboxListTile(
+                      value: isSelected,
+                      title: Text(item['nama_barang']),
+                      activeColor: Colors.deepPurple,
+                      onChanged: (bool? checked) {
+                        setStateDialog(() {
+                          if (checked == true) {
+                            _selectedBarangIds.add(id);
+                          } else {
+                            _selectedBarangIds.remove(id);
+                          }
+                        });
+                        setState(() {}); // Update Chip di halaman utama
+                      },
+                    );
+                  },
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Selesai"),
-                ),
+                  onPressed: () => Navigator.pop(context), 
+                  child: const Text("Selesai", style: TextStyle(color: Colors.deepPurple))
+                )
               ],
             );
           },
@@ -149,151 +134,118 @@ class _BorrowFormState extends State<BorrowForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Generate Chips untuk barang yang dipilih
-    List<Widget> selectedChips =
-        _selectedBarangIds.map((id) {
-          final barang = _barangListDB.firstWhere(
-            (element) => element['id'] == id,
-            orElse: () => {'nama_barang': 'Unknown'},
-          );
-          return Chip(
-            label: Text(
-              barang['nama_barang'],
-              style: const TextStyle(fontSize: 12),
-            ),
-            onDeleted: () => setState(() => _selectedBarangIds.remove(id)),
-          );
-        }).toList();
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Form Peminjaman")),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Detail Peminjaman",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+      appBar: AppBar(
+        title: const Text("Form Peminjaman"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Detail Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  
+                  // 1. Dropdown Sekolah (Mapping id_sekolah)
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: "Sekolah Tujuan", 
+                      prefixIcon: Icon(Icons.school, color: Colors.deepPurple),
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 20),
+                    value: _selectedSchoolId,
+                    items: _schoolList.map((item) => DropdownMenuItem(
+                      value: item['id'] as String, 
+                      child: Text(item['nama_sekolah'])
+                    )).toList(),
+                    onChanged: (val) => setState(() => _selectedSchoolId = val),
+                  ),
+                  const SizedBox(height: 16),
 
-                    // 1. Dropdown Sekolah
-                    DropdownButtonFormField<String>(
+                  // 2. Multi Select Barang (Mapping detail_peminjaman)
+                  InkWell(
+                    onTap: _showItemSelectionDialog,
+                    child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: "Sekolah Tujuan",
-                        prefixIcon: Icon(
-                          Icons.school,
-                          color: Colors.deepPurple,
-                        ),
+                        labelText: "Daftar Barang", 
+                        prefixIcon: Icon(Icons.inventory, color: Colors.deepPurple),
+                        border: OutlineInputBorder(),
                       ),
-                      value: _selectedSchoolId,
-                      items:
-                          _schoolList.map((item) {
-                            return DropdownMenuItem<String>(
-                              value: item['id'],
-                              child: Text(item['nama_sekolah']),
-                            );
-                          }).toList(),
-                      onChanged:
-                          (val) => setState(() => _selectedSchoolId = val),
+                      child: _selectedBarangIds.isEmpty
+                          ? const Text("Pilih barang...", style: TextStyle(color: Colors.grey))
+                          : Wrap(
+                              spacing: 8,
+                              children: _selectedBarangIds.map((id) {
+                                final item = _barangListDB.firstWhere((e) => e['id'] == id, orElse: () => {'nama_barang': '...'});
+                                return Chip(
+                                  label: Text(item['nama_barang']), 
+                                  onDeleted: () => setState(() => _selectedBarangIds.remove(id))
+                                );
+                              }).toList(),
+                            ),
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 24),
 
-                    // 2. Multi Select Barang
-                    InkWell(
-                      onTap: _showItemSelectionDialog,
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: "Daftar Barang",
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Colors.deepPurple,
-                          ),
-                          suffixIcon: Icon(Icons.arrow_drop_down),
-                        ),
-                        child:
-                            _selectedBarangIds.isEmpty
-                                ? const Text(
-                                  "Pilih barang...",
-                                  style: TextStyle(color: Colors.grey),
-                                )
-                                : Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: selectedChips,
-                                ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                  const Text("Bukti Kondisi Awal (Ukuran Asli)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
 
-                    const Text(
-                      "Bukti Kondisi Awal",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 3. Upload Foto
-                    _pickedImage != null
-                        ? Stack(
+                  // 3. Area Foto (Support Web & Mobile)
+                  _pickedImage != null
+                      ? Stack(
                           children: [
                             Container(
-                              height: 200,
+                              height: 250,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
                                 image: DecorationImage(
-                                  image:
-                                      kIsWeb
-                                          ? NetworkImage(_pickedImage!.path)
-                                          : FileImage(File(_pickedImage!.path))
-                                              as ImageProvider,
+                                  image: kIsWeb 
+                                      ? NetworkImage(_pickedImage!.path) 
+                                      : FileImage(File(_pickedImage!.path)) as ImageProvider,
                                   fit: BoxFit.cover,
                                 ),
                               ),
                             ),
                             Positioned(
-                              right: 8,
-                              top: 8,
+                              right: 8, top: 8,
                               child: CircleAvatar(
-                                backgroundColor: Colors.red,
+                                backgroundColor: Colors.red, 
                                 child: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed:
-                                      () => setState(() => _pickedImage = null),
-                                ),
+                                  icon: const Icon(Icons.delete, color: Colors.white), 
+                                  onPressed: () => setState(() => _pickedImage = null)
+                                )
                               ),
                             ),
                           ],
                         )
-                        : PhotoUploadArea(
-                          label: "Ketuk untuk ambil foto",
-                          onTap: _pickImage,
+                      : PhotoUploadArea(
+                          label: "Ketuk untuk pilih Kamera/Galeri", 
+                          onTap: _handlePickImage
                         ),
 
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submitForm,
-                        child: const Text("Ajukan Peminjaman"),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
                       ),
+                      onPressed: _submitForm, 
+                      child: const Text("Ajukan Peminjaman", style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
     );
   }
 }

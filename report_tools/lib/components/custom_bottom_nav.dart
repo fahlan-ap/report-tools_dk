@@ -16,7 +16,7 @@ class CustomBottomNav extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.blue,
+      selectedItemColor: Colors.deepPurple,
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       items: const [

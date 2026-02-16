@@ -3,19 +3,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
+  var isLoading = false.obs;
 
-  // Stream untuk mengambil data peminjaman beserta relasinya
-  Stream<List<Map<String, dynamic>>> get activePeminjamanStream {
-    return supabase
-        .from('peminjaman')
-        .stream(primaryKey: ['id'])
-        .eq('status', 'berlangsung')
-        .order('waktu_pinjam', ascending: false)
-        .map((maps) => maps);
+  // Variabel RxList untuk menampung data peminjaman aktif
+  var listPeminjamanAktif = <Map<String, dynamic>>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchPeminjamanAktif(); // Ambil data saat dashboard dibuka
   }
 
-    Future<List<Map<String, dynamic>>> getDetailedPeminjaman() async {
+  // --- FUNGSI FETCH DATA (REFRESH) ---
+  Future<void> fetchPeminjamanAktif() async {
     try {
+      isLoading.value = true;
+      
+      // Mengambil data detail dengan join tabel profiles, sekolah, dan barang
       final response = await supabase
           .from('peminjaman')
           .select('''
@@ -26,12 +30,20 @@ class DashController extends GetxController {
               barang (nama_barang)
             )
           ''')
-          .eq('status', 'berlangsung');
-      
-      return List<Map<String, dynamic>>.from(response);
+          .eq('status', 'berlangsung')
+          .order('waktu_pinjam', ascending: false);
+
+      if (response != null) {
+        listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
+      }
     } catch (e) {
-      print("Error Debug Dashboard: $e");
-      return [];
+      print("Error Fetch Dashboard: $e");
+      Get.snackbar("Error", "Gagal memuat data dashboard");
+    } finally {
+      isLoading.value = false;
     }
   }
+
+  // Fungsi tambahan jika Anda ingin menghitung total pinjaman aktif untuk ringkasan di dashboard
+  int get totalPinjamAktif => listPeminjamanAktif.length;
 }
