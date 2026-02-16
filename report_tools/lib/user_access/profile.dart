@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (data != null) {
           // Menyesuaikan key dengan skema database
           _nama = data['nama_lengkap'] ?? "Tanpa Nama";
-          _role = data['role'] ?? "Karyawan";
+          _role = data['role'] ?? "User";
           _nip = data['nip'] ?? "-";
         } else {
           _nama = "Data tidak ditemukan";

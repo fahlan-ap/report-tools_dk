@@ -20,10 +20,10 @@ class LoginPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.inventory_2_rounded, size: 80, color: Colors.blue),
+              const Icon(Icons.inventory_2_rounded, size: 80, color: Colors.deepPurple),
               const SizedBox(height: 16),
               const Text(
-                "Manajemen Inventaris",
+                "Report Tools DK",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 32),
@@ -51,7 +51,7 @@ class LoginPage extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),

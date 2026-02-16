@@ -33,10 +33,8 @@ class DashController extends GetxController {
           .eq('status', 'berlangsung')
           .order('waktu_pinjam', ascending: false);
 
-      if (response != null) {
-        listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
-      }
-    } catch (e) {
+      listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
+        } catch (e) {
       print("Error Fetch Dashboard: $e");
       Get.snackbar("Error", "Gagal memuat data dashboard");
     } finally {

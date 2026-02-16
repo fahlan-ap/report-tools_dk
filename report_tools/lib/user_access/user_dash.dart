@@ -27,7 +27,7 @@ class _UserDashState extends State<UserDash> {
     final profile = await _controller.getUserProfile();
     if (mounted && profile != null) {
       setState(() {
-        _displayName = profile['nama_lengkap'] ?? "Karyawan";
+        _displayName = profile['nama_lengkap'] ?? "User";
       });
     }
   }
