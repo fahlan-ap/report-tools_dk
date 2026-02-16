@@ -26,7 +26,7 @@ class RiwayatController extends GetxController {
           .from('peminjaman')
           .select('''
             *,
-            profiles:id_karyawan(nama_lengkap),
+            profiles:id_user(nama_lengkap),
             sekolah:id_sekolah(nama_sekolah),
             detail_peminjaman(barang(nama_barang))
           ''')
