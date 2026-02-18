@@ -14,10 +14,10 @@ class PhotoUploadArea extends StatelessWidget {
         height: 160,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.withOpacity(0.02), // Background tipis
+          color: Colors.deepPurple.withOpacity(0.02),
           border: Border.all(
             color: Colors.deepPurple.withOpacity(0.3),
-            style: BorderStyle.solid, // Bisa diganti Dash dengan Package lain, tapi solid pun oke
+            style: BorderStyle.solid,
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -31,7 +31,7 @@ class PhotoUploadArea extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.add_a_photo_outlined, // Icon lebih representatif
+                Icons.add_a_photo_outlined,
                 size: 32,
                 color: Colors.deepPurple,
               ),

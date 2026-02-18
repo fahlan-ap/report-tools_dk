@@ -7,7 +7,7 @@ class UserPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller
+    // Inisiasi Controller
     final controller = Get.put(UserManageController());
 
     return Column(
@@ -22,7 +22,6 @@ class UserPage extends StatelessWidget {
                 "Manajemen User",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              // Barisan tombol di sebelah kanan
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -50,14 +49,12 @@ class UserPage extends StatelessWidget {
         // --- LIST USER (MENGGUNAKAN OBX) ---
         Expanded(
           child: Obx(() {
-            // Tampilkan loading jika data sedang diambil dan list masih kosong
             if (controller.isLoading.value && controller.listUser.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(color: Colors.deepPurple),
               );
             }
 
-            // Jika data kosong
             if (controller.listUser.isEmpty) {
               return const Center(
                 child: Text("Belum ada user dengan role 'user'"),
@@ -89,13 +86,11 @@ class UserPage extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tombol Edit
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.orange),
                           onPressed: () =>
                               _showEditProfileDialog(context, controller, user),
                         ),
-                        // Tombol Hapus
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _confirmDelete(context, controller, user),
@@ -147,7 +142,7 @@ class UserPage extends StatelessWidget {
                     : () async {
                         bool success = await controller.createAuthAccount();
                         if (success) {
-                          Get.back(); // Tutup dialog Auth
+                          Get.back();
                           _showAddProfileDialog(context, controller); // Buka Profil
                         }
                       },

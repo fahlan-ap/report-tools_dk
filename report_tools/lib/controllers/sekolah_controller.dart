@@ -6,16 +6,14 @@ class SekolahController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   var isLoading = false.obs;
 
-  // Variabel RxList untuk menampung data sekolah secara lokal
   var listSekolah = <Map<String, dynamic>>[].obs;
 
-  // Controller untuk Input Text di Pop-up
   final TextEditingController namaSekolahController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    fetchSekolah(); // Ambil data otomatis saat controller dimuat
+    fetchSekolah();
   }
 
   // --- FUNGSI FETCH DATA (REFRESH) ---
@@ -28,7 +26,6 @@ class SekolahController extends GetxController {
           .select('*')
           .order('nama_sekolah', ascending: true);
 
-      // Konversi hasil ke List Map dan update RxList
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
       listSekolah.value = data;
 
@@ -60,7 +57,6 @@ class SekolahController extends GetxController {
       namaSekolahController.clear();
       Get.back();
       
-      // Refresh data agar list terupdate
       fetchSekolah();
       
       Get.snackbar(
@@ -91,7 +87,6 @@ class SekolahController extends GetxController {
       namaSekolahController.clear();
       Get.back();
       
-      // Refresh data agar list terupdate
       fetchSekolah();
 
       Get.snackbar(
@@ -110,7 +105,6 @@ class SekolahController extends GetxController {
     try {
       await supabase.from('sekolah').delete().eq('id', id);
       
-      // Update list lokal secara langsung agar UI responsif
       listSekolah.removeWhere((item) => item['id'] == id);
       
       Get.snackbar("Sukses", "Sekolah berhasil dihapus");

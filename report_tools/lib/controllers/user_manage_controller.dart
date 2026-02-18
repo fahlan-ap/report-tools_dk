@@ -6,24 +6,22 @@ class UserManageController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   var isLoading = false.obs;
 
-  // Variabel RxList untuk menampung data user (profiles) secara lokal
   var listUser = <Map<String, dynamic>>[].obs;
 
-  // Controllers untuk Akun Login (Auth)
+  // Controllers Login (Auth)
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Controllers untuk Data Profil (Profiles)
+  // Controllers Data Profil (Profiles)
   final TextEditingController namaController = TextEditingController();
   final TextEditingController nipController = TextEditingController();
 
-  // Variabel penampung UUID sementara dari Auth
   String? tempUid; 
 
   @override
   void onInit() {
     super.onInit();
-    fetchUsers(); // Ambil data otomatis saat controller diinisialisasi
+    fetchUsers();
   }
 
   // --- FUNGSI FETCH DATA (REFRESH) ---
@@ -31,7 +29,6 @@ class UserManageController extends GetxController {
     try {
       isLoading.value = true;
       
-      // Mengambil data profiles dengan role 'user'
       final response = await supabase
           .from('profiles')
           .select('*')
@@ -95,9 +92,8 @@ class UserManageController extends GetxController {
       });
 
       _clearAll();
-      Get.back(); // Tutup dialog profil
+      Get.back();
       
-      // REFRESH DATA setelah simpan berhasilbar
       fetchUsers();
       
       Get.snackbar("Sukses", "Akun dan Profil berhasil dibuat");
@@ -141,7 +137,6 @@ class UserManageController extends GetxController {
     try {
       await supabase.from('profiles').delete().eq('id', id);
       
-      // Update list lokal secara instan agar UI responsif
       listUser.removeWhere((user) => user['id'] == id);
       
       Get.snackbar("Sukses", "User berhasil dihapus");

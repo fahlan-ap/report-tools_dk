@@ -7,7 +7,7 @@ class SekolahPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller sekolah
+    // Inisiasi Controller
     final controller = Get.put(SekolahController());
 
     return Column(
@@ -22,7 +22,6 @@ class SekolahPage extends StatelessWidget {
                 "Daftar Sekolah",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              // Menggabungkan tombol Tambah dan Refresh
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -50,14 +49,12 @@ class SekolahPage extends StatelessWidget {
         // --- LIST DATA SEKOLAH (MENGGUNAKAN OBX) ---
         Expanded(
           child: Obx(() {
-            // Loading state saat list masih kosong
             if (controller.isLoading.value && controller.listSekolah.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(color: Colors.deepPurple),
               );
             }
 
-            // Empty state
             if (controller.listSekolah.isEmpty) {
               return const Center(
                 child: Text("Belum ada data sekolah."),
@@ -90,12 +87,10 @@ class SekolahPage extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tombol Edit
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, color: Colors.orange),
                           onPressed: () => _showFormDialog(context, controller, sekolah: sekolah),
                         ),
-                        // Tombol Hapus
                         IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.red),
                           onPressed: () => _confirmDelete(context, controller, sekolah),

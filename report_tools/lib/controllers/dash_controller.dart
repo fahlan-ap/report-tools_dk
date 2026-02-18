@@ -3,23 +3,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
+  
+  // State Management UI
   var isLoading = false.obs;
-
-  // Variabel RxList untuk menampung data peminjaman aktif
   var listPeminjamanAktif = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchPeminjamanAktif(); // Ambil data saat dashboard dibuka
+    fetchPeminjamanAktif(); 
   }
 
-  // --- FUNGSI FETCH DATA (REFRESH) ---
+  // --- FUNGSI UTAMA FETCH DATA ---
   Future<void> fetchPeminjamanAktif() async {
     try {
       isLoading.value = true;
       
-      // Mengambil data detail dengan join tabel profiles, sekolah, dan barang
+      //Joint Data Table
       final response = await supabase
           .from('peminjaman')
           .select('''
@@ -34,14 +34,18 @@ class DashController extends GetxController {
           .order('waktu_pinjam', ascending: false);
 
       listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
-        } catch (e) {
+      
+      print("Dashboard Admin: Data berhasil diperbarui otomatis.");
+    } catch (e) {
       print("Error Fetch Dashboard: $e");
-      Get.snackbar("Error", "Gagal memuat data dashboard");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Fungsi tambahan jika Anda ingin menghitung total pinjaman aktif untuk ringkasan di dashboard
   int get totalPinjamAktif => listPeminjamanAktif.length;
+
+  void clearData() {
+    listPeminjamanAktif.clear();
+  }
 }

@@ -11,7 +11,7 @@ class UserDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller (Gunakan Get.put agar controller aktif)
+    // Inisialisasi Controller
     final UserController controller = Get.put(UserController());
 
     return Scaffold(
@@ -20,8 +20,7 @@ class UserDash extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Obx(() {
-          // Mengambil nama secara reaktif dari userProfile
-          final displayName = controller.userProfile['nama_lengkap'] ?? "Karyawan";
+          final displayName = controller.userProfile['nama_lengkap'] ?? "User";
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -46,14 +45,12 @@ class UserDash extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: () => controller.fetchUserDashboard(),
         child: Obx(() {
-          // Tampilan Loading
           if (controller.isLoading.value && controller.listPeminjamanAktif.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
           }
 
           final loans = controller.listPeminjamanAktif;
 
-          // Tampilan Jika Kosong
           if (loans.isEmpty) {
             return _buildEmptyState(context);
           }
@@ -64,7 +61,7 @@ class UserDash extends StatelessWidget {
             itemBuilder: (context, index) {
               final Map<String, dynamic> loan = loans[index];
 
-              // Parsing Data untuk UI
+              // Parsing Data UI
               final namaSekolah = loan['sekolah']?['nama_sekolah'] ?? 'Sekolah Tidak Diketahui';
               final List<dynamic> details = loan['detail_peminjaman'] ?? [];
               final String namaBarangDisplay = details.isEmpty 

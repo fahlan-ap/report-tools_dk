@@ -24,7 +24,24 @@ class UserController extends GetxController {
   // --- AUTH HELPER ---
   User? get currentUser => supabase.auth.currentUser;
 
-  // --- IMAGE PICKER (Kamera/Galeri) ---
+  // --- MASTER DATA ---
+  Future<List<Map<String, dynamic>>> getBarangList() async {
+    final response = await supabase
+        .from('barang')
+        .select('id, nama_barang')
+        .order('nama_barang', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<List<Map<String, dynamic>>> getSekolahList() async {
+    final response = await supabase
+        .from('sekolah')
+        .select('id, nama_sekolah')
+        .order('nama_sekolah', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  // --- IMAGE PICKER ---
   Future<XFile?> pickImage(BuildContext context) async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -58,7 +75,6 @@ class UserController extends GetxController {
 
     if (source != null) {
       try {
-        // Ditambahkan imageQuality 70 agar file tidak terlalu besar saat upload
         return await _picker.pickImage(source: source, imageQuality: 70);
       } catch (e) {
         Get.snackbar("Error", "Gagal membuka media: $e");
@@ -68,36 +84,7 @@ class UserController extends GetxController {
     return null;
   }
 
-  // --- PROFILE DATA ---
-  Future<void> fetchUserProfile() async {
-    final user = currentUser;
-    if (user == null) return;
-    try {
-      final res = await supabase.from('profiles').select().eq('id', user.id).single();
-      userProfile.value = res;
-    } catch (e) {
-      debugPrint("Error profile: $e");
-    }
-  }
-
-  // --- MASTER DATA ---
-  Future<List<Map<String, dynamic>>> getBarangList() async {
-    final response = await supabase
-        .from('barang')
-        .select('id, nama_barang')
-        .order('nama_barang', ascending: true);
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  Future<List<Map<String, dynamic>>> getSekolahList() async {
-    final response = await supabase
-        .from('sekolah')
-        .select('id, nama_sekolah')
-        .order('nama_sekolah', ascending: true);
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  // --- DASHBOARD DATA (ACTIVE LOANS) ---
+  // --- FUNGSI FETCH DASHBOARD USER ---
   Future<void> fetchUserDashboard() async {
     final user = currentUser;
     if (user == null) return;
@@ -108,13 +95,14 @@ class UserController extends GetxController {
           .from('peminjaman')
           .select('''
             *,
+            profiles (nama_lengkap),
             sekolah (nama_sekolah),
             detail_peminjaman (
               barang (nama_barang)
             )
           ''')
           .eq('id_user', user.id)
-          .eq('status', 'berlangsung') // Hanya yang aktif
+          .eq('status', 'berlangsung')
           .order('waktu_pinjam', ascending: false);
       
       listPeminjamanAktif.value = List<Map<String, dynamic>>.from(response);
@@ -138,7 +126,6 @@ class UserController extends GetxController {
       isLoading.value = true;
       final fileName = 'pinjam_${DateTime.now().millisecondsSinceEpoch}_${user.id}.jpg';
 
-      // Upload Foto
       if (kIsWeb) {
         final bytes = await fotoBukti.readAsBytes();
         await supabase.storage.from('bukti_peminjaman').uploadBinary(
@@ -146,10 +133,8 @@ class UserController extends GetxController {
       } else {
         await supabase.storage.from('bukti_peminjaman').upload(fileName, File(fotoBukti.path));
       }
-
       final fotoUrl = supabase.storage.from('bukti_peminjaman').getPublicUrl(fileName);
 
-      // Insert Peminjaman
       final responsePeminjaman = await supabase.from('peminjaman').insert({
         'id_user': user.id,
         'id_sekolah': sekolahId,
@@ -158,7 +143,6 @@ class UserController extends GetxController {
         'status': 'berlangsung',
       }).select().single();
 
-      // Insert Detail Barang
       final peminjamanId = responsePeminjaman['id'];
       final List<Map<String, dynamic>> detailData = barangIds.map((barangId) {
         return {'id_peminjaman': peminjamanId, 'id_barang': barangId};
@@ -166,11 +150,12 @@ class UserController extends GetxController {
 
       await supabase.from('detail_peminjaman').insert(detailData);
       
-      // Refresh Dashboard Otomatis
-      fetchUserDashboard();
+      await fetchUserDashboard();
+      Get.snackbar("Sukses", "Peminjaman berhasil diajukan");
       
     } catch (e) {
-      throw Exception("Gagal mengajukan peminjaman: $e");
+      Get.snackbar("Error", "Gagal: $e");
+      rethrow;
     } finally {
       isLoading.value = false;
     }
@@ -188,7 +173,6 @@ class UserController extends GetxController {
       isLoading.value = true;
       final fileName = 'kembali_${DateTime.now().millisecondsSinceEpoch}_${user.id}.jpg';
       
-      // 1. Upload Foto Pengembalian
       if (kIsWeb) {
         final bytes = await fotoBuktiKembali.readAsBytes();
         await supabase.storage.from('bukti_peminjaman').uploadBinary(
@@ -198,14 +182,12 @@ class UserController extends GetxController {
       }
       final fotoUrlKembali = supabase.storage.from('bukti_peminjaman').getPublicUrl(fileName);
 
-      // 2. Persiapkan Data Riwayat
       final List details = loanData['detail_peminjaman'] ?? [];
       final String daftarBarang = details.map((d) => d['barang']?['nama_barang'] ?? 'Item Dihapus').join(", ");
 
-      // 3. Masukkan ke Riwayat
       await supabase.from('riwayat').insert({
         'id_peminjaman': loanData['id'],
-        'nama_karyawan': userProfile['nama_lengkap'] ?? 'Tanpa Nama',
+        'nama_user': loanData['profiles']?['nama_lengkap'] ?? 'Tanpa Nama',
         'nama_barang': daftarBarang,
         'nama_sekolah': loanData['sekolah']?['nama_sekolah'] ?? 'Sekolah Dihapus',
         'waktu_pinjam': loanData['waktu_pinjam'],
@@ -214,18 +196,27 @@ class UserController extends GetxController {
         'foto_kembali': fotoUrlKembali,
       });
 
-      // 4. Hapus Peminjaman Aktif (Clean up)
       await supabase.from('detail_peminjaman').delete().eq('id_peminjaman', loanData['id']);
       await supabase.from('peminjaman').delete().eq('id', loanData['id']);
 
-      // Refresh Dashboard Otomatis
-      fetchUserDashboard();
+      await fetchUserDashboard();
+      Get.snackbar("Sukses", "Barang telah dikembalikan");
 
     } catch (e) {
-      debugPrint("Gagal kembali: $e");
-      throw Exception("Proses pengembalian gagal.");
+      Get.snackbar("Error", "Gagal memproses pengembalian");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchUserProfile() async {
+    final user = currentUser;
+    if (user == null) return;
+    try {
+      final res = await supabase.from('profiles').select().eq('id', user.id).single();
+      userProfile.value = res;
+    } catch (e) {
+      debugPrint("Error profile: $e");
     }
   }
 }

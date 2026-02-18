@@ -7,7 +7,6 @@ import '../controllers/user_controller.dart';
 import '../widgets/photo_upload_area.dart';
 
 class ReturnForm extends StatefulWidget {
-  // Menerima data lengkap peminjaman dari dashboard
   final Map<String, dynamic> loanData;
 
   const ReturnForm({super.key, required this.loanData});
@@ -17,11 +16,12 @@ class ReturnForm extends StatefulWidget {
 }
 
 class _ReturnFormState extends State<ReturnForm> {
-  final UserController _controller = UserController();
+  final UserController _controller = Get.find<UserController>();
+  
   XFile? _pickedImage;
-  bool _isLoading = false;
+  bool _isSubmitting = false;
 
-  // Fungsi ambil foto (Kamera/Galeri)
+  // Ambil Foto
   Future<void> _handlePickImage() async {
     final XFile? image = await _controller.pickImage(context);
     if (image != null) {
@@ -29,7 +29,7 @@ class _ReturnFormState extends State<ReturnForm> {
     }
   }
 
-  // Proses Konfirmasi Pengembalian
+  // Konfirmasi Pengembalian
   Future<void> _submitReturn() async {
     if (_pickedImage == null) {
       Get.snackbar(
@@ -41,37 +41,32 @@ class _ReturnFormState extends State<ReturnForm> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() => _isSubmitting = true);
 
     try {
-      // Memanggil fungsi pindah data di UserService
       await _controller.submitPengembalian(
         loanData: widget.loanData,
         fotoBuktiKembali: _pickedImage!,
       );
 
-      Get.back(); // Kembali ke Dashboard
+      Get.back();
+      
       Get.snackbar(
         "Berhasil", 
-        "Barang dikembalikan dan data telah dipindahkan ke riwayat.",
+        "Barang berhasil dikembalikan.",
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar(
-        "Gagal", 
-        "Terjadi kesalahan: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      debugPrint("Error submit pengembalian: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Parsing daftar barang dari loanData untuk ditampilkan di UI
+    // Parsing data UI
     final List details = widget.loanData['detail_peminjaman'] ?? [];
     final String daftarBarang = details.map((d) => d['barang']?['nama_barang'] ?? 'Item').join(", ");
     final String namaSekolah = widget.loanData['sekolah']?['nama_sekolah'] ?? 'Sekolah';
@@ -84,14 +79,13 @@ class _ReturnFormState extends State<ReturnForm> {
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: _isLoading
+      body: _isSubmitting || _controller.isLoading.value
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- RINGKASAN DATA PINJAM ---
                   const Text(
                     "Ringkasan Peminjaman",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -112,14 +106,14 @@ class _ReturnFormState extends State<ReturnForm> {
                         const Divider(height: 20),
                         _buildInfoRow(Icons.inventory_2, "Daftar Barang", daftarBarang),
                         const Divider(height: 20),
-                        _buildInfoRow(Icons.calendar_today, "Tanggal Pinjam", widget.loanData['waktu_pinjam'].toString().split('T')[0]),
+                        _buildInfoRow(Icons.calendar_today, "Tanggal Pinjam", 
+                          widget.loanData['waktu_pinjam'].toString().substring(0, 10)),
                       ],
                     ),
                   ),
                   
                   const SizedBox(height: 24),
 
-                  // --- AREA UPLOAD FOTO ---
                   const Text(
                     "Foto Kondisi Barang (Saat Kembali)",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -161,7 +155,6 @@ class _ReturnFormState extends State<ReturnForm> {
 
                   const SizedBox(height: 40),
 
-                  // --- TOMBOL SUBMIT ---
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -184,7 +177,6 @@ class _ReturnFormState extends State<ReturnForm> {
     );
   }
 
-  // Widget pembantu untuk baris info
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
@@ -202,4 +194,4 @@ class _ReturnFormState extends State<ReturnForm> {
       ],
     );
   }
-} 
+}

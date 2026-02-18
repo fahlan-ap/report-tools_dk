@@ -14,7 +14,7 @@ class BorrowForm extends StatefulWidget {
 }
 
 class _BorrowFormState extends State<BorrowForm> {
-  final UserController _controller = UserController();
+  final UserController _controller = Get.find<UserController>();
 
   List<Map<String, dynamic>> _schoolList = [];
   List<Map<String, dynamic>> _barangListDB = [];
@@ -30,7 +30,6 @@ class _BorrowFormState extends State<BorrowForm> {
     _loadInitialData();
   }
 
-  // Memastikan data sekolah dan barang diambil sesuai tabel public.sekolah & public.barang
   Future<void> _loadInitialData() async {
     try {
       final schools = await _controller.getSekolahList();
@@ -40,12 +39,11 @@ class _BorrowFormState extends State<BorrowForm> {
         _barangListDB = items;
       });
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat data: $e", 
+      Get.snackbar("Error", "Gagal memuat data master",
           backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
-  // Menggunakan fungsi pickImage dari UserService (Modal BottomSheet ala DTomato)
   Future<void> _handlePickImage() async {
     final XFile? image = await _controller.pickImage(context);
     if (image != null) {
@@ -54,7 +52,6 @@ class _BorrowFormState extends State<BorrowForm> {
   }
 
   Future<void> _submitForm() async {
-    // Validasi input sesuai kolom NOT NULL di database
     if (_selectedSchoolId == null || _selectedBarangIds.isEmpty || _pickedImage == null) {
       Get.snackbar("Peringatan", "Sekolah, Barang, dan Foto Bukti wajib diisi!", 
       backgroundColor: Colors.orange, colorText: Colors.white);
@@ -63,8 +60,6 @@ class _BorrowFormState extends State<BorrowForm> {
 
     setState(() => _isLoading = true);
     try {
-      // Mengirim data ke controller. 
-      // id_user akan diambil otomatis dari auth.currentUser.id di dalam service
       await _controller.submitPeminjaman(
         sekolahId: _selectedSchoolId!,
         barangIds: _selectedBarangIds,
@@ -78,7 +73,7 @@ class _BorrowFormState extends State<BorrowForm> {
       Get.snackbar("Gagal", "Terjadi kesalahan database: $e", 
       backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -98,7 +93,7 @@ class _BorrowFormState extends State<BorrowForm> {
                   itemCount: _barangListDB.length,
                   itemBuilder: (context, index) {
                     final item = _barangListDB[index];
-                    final id = item['id'] as String; // id berbentuk UUID String
+                    final id = item['id'].toString();
                     final isSelected = _selectedBarangIds.contains(id);
 
                     return CheckboxListTile(
@@ -113,7 +108,7 @@ class _BorrowFormState extends State<BorrowForm> {
                             _selectedBarangIds.remove(id);
                           }
                         });
-                        setState(() {}); // Update Chip di halaman utama
+                        setState(() {}); 
                       },
                     );
                   },
@@ -141,33 +136,33 @@ class _BorrowFormState extends State<BorrowForm> {
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: _isLoading
+      body: _isLoading || _controller.isLoading.value
           ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Detail Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text("Detail Peminjaman", 
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   
-                  // 1. Dropdown Sekolah (Mapping id_sekolah)
+                  // 1. Dropdown Sekolah
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: "Sekolah Tujuan", 
                       prefixIcon: Icon(Icons.school, color: Colors.deepPurple),
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedSchoolId,
                     items: _schoolList.map((item) => DropdownMenuItem(
-                      value: item['id'] as String, 
+                      value: item['id'].toString(), 
                       child: Text(item['nama_sekolah'])
                     )).toList(),
                     onChanged: (val) => setState(() => _selectedSchoolId = val),
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Multi Select Barang (Mapping detail_peminjaman)
+                  // 2. Multi Select Barang
                   InkWell(
                     onTap: _showItemSelectionDialog,
                     child: InputDecorator(
@@ -181,7 +176,9 @@ class _BorrowFormState extends State<BorrowForm> {
                           : Wrap(
                               spacing: 8,
                               children: _selectedBarangIds.map((id) {
-                                final item = _barangListDB.firstWhere((e) => e['id'] == id, orElse: () => {'nama_barang': '...'});
+                                final item = _barangListDB.firstWhere(
+                                    (e) => e['id'].toString() == id, 
+                                    orElse: () => {'nama_barang': '...'});
                                 return Chip(
                                   label: Text(item['nama_barang']), 
                                   onDeleted: () => setState(() => _selectedBarangIds.remove(id))
@@ -192,10 +189,11 @@ class _BorrowFormState extends State<BorrowForm> {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text("Bukti Kondisi Awal (Ukuran Asli)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text("Bukti Kondisi Awal (Ukuran Asli)", 
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
 
-                  // 3. Area Foto (Support Web & Mobile)
+                  // 3. Area Foto
                   _pickedImage != null
                       ? Stack(
                           children: [
@@ -231,6 +229,8 @@ class _BorrowFormState extends State<BorrowForm> {
                         ),
 
                   const SizedBox(height: 32),
+                  
+                  // Tombol Ajukan
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -240,7 +240,8 @@ class _BorrowFormState extends State<BorrowForm> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
                       ),
                       onPressed: _submitForm, 
-                      child: const Text("Ajukan Peminjaman", style: TextStyle(color: Colors.white, fontSize: 16)),
+                      child: const Text("Ajukan Peminjaman", 
+                          style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                   ),
                 ],

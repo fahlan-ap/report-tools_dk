@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/user_controller.dart'; // Controller sisi Teacher/User
+import '../controllers/user_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller
+    // Inisialisasi Controller
     final AuthController authC = Get.find<AuthController>();
     final UserController controller = Get.find<UserController>();
 
@@ -21,7 +21,6 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple,
         actions: [
-          // Tambahkan tombol refresh jika ingin memuat ulang data profil manual
           IconButton(
             onPressed: () => controller.fetchUserProfile(),
             icon: const Icon(Icons.refresh),
@@ -29,12 +28,10 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        // Cek jika data sedang dimuat
         if (controller.isLoading.value && controller.userProfile.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Ambil data dari RxMap di controller
         final profile = controller.userProfile;
         final String nama = profile['nama_lengkap'] ?? "Data tidak ditemukan";
         final String nip = profile['nip'] ?? "-";
@@ -81,14 +78,13 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 30),
 
-              // --- INFO DETAIL (Reaktif dari RxMap) ---
+              // --- INFO DETAIL ---
               _buildProfileCard(
                 icon: Icons.badge_outlined,
                 label: "NIP",
                 value: nip,
               ),
 
-              // Anda bisa menambahkan info email dari Auth
               _buildProfileCard(
                 icon: Icons.email_outlined,
                 label: "Email Akun",
@@ -145,7 +141,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Widget kartu informasi statis
   Widget _buildProfileCard({
     required IconData icon,
     required String label,

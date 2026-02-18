@@ -6,16 +6,14 @@ class BarangController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   var isLoading = false.obs;
 
-  // Variabel RxList untuk menampung data barang secara lokal
   var listBarang = <Map<String, dynamic>>[].obs;
 
-  // Controller untuk Input Text di Pop-up
   final TextEditingController namaBarangController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    fetchBarang(); // Ambil data otomatis saat controller dimuat
+    fetchBarang();
   }
 
   // --- FUNGSI FETCH DATA (REFRESH) ---
@@ -28,7 +26,6 @@ class BarangController extends GetxController {
           .select('*')
           .order('nama_barang', ascending: true);
 
-      // Konversi hasil ke List Map dan update RxList
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
       listBarang.value = data;
 
@@ -60,7 +57,6 @@ class BarangController extends GetxController {
       namaBarangController.clear();
       Get.back();
       
-      // Refresh data agar list terupdate otomatis
       fetchBarang();
       
       Get.snackbar(
@@ -93,7 +89,6 @@ class BarangController extends GetxController {
       namaBarangController.clear();
       Get.back();
       
-      // Refresh data agar list terupdate otomatis
       fetchBarang();
 
       Get.snackbar(
@@ -112,7 +107,6 @@ class BarangController extends GetxController {
     try {
       await supabase.from('barang').delete().eq('id', id);
       
-      // Update list lokal secara langsung agar UI responsif
       listBarang.removeWhere((item) => item['id'] == id);
       
       Get.snackbar("Sukses", "Barang berhasil dihapus");

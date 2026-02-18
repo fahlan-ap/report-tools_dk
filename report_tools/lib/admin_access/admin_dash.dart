@@ -84,13 +84,11 @@ class ActivePeminjamanList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Memastikan controller terpasang
     final adminC = Get.put(DashController());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- HEADER KONSISTEN DENGAN HALAMAN LAIN ---
         Container(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -104,7 +102,6 @@ class ActivePeminjamanList extends StatelessWidget {
                   color: Colors.black87
                 ),
               ),
-              // Tombol Refresh konsisten
               IconButton(
                 onPressed: () => adminC.fetchPeminjamanAktif(),
                 icon: const Icon(Icons.refresh, color: Colors.deepPurple),
@@ -117,7 +114,6 @@ class ActivePeminjamanList extends StatelessWidget {
         // --- LIST DATA MENGGUNAKAN OBX ---
         Expanded(
           child: Obx(() {
-            // Tampilkan loading saat pertama kali atau saat refresh
             if (adminC.isLoading.value && adminC.listPeminjamanAktif.isEmpty) {
               return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
             }
@@ -158,7 +154,7 @@ class ActivePeminjamanList extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = data[index];
                 
-                final namaKaryawan = item['profiles']?['nama_lengkap'] ?? 'User';
+                final namaUser= item['profiles']?['nama_lengkap'] ?? 'User';
                 final namaSekolah = item['sekolah']?['nama_sekolah'] ?? 'Sekolah';
                 
                 final List detailBarang = item['detail_peminjaman'] ?? [];
@@ -191,7 +187,7 @@ class ActivePeminjamanList extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                namaKaryawan, 
+                                namaUser, 
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold, 
                                   fontSize: 15,

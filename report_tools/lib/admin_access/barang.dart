@@ -7,7 +7,7 @@ class BarangPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi controller
+    // Inisiasi Controller
     final controller = Get.put(BarangController());
 
     return Column(
@@ -22,7 +22,6 @@ class BarangPage extends StatelessWidget {
                 "Daftar Inventaris",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              // Menggabungkan tombol Tambah dan Refresh dalam Row
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -34,8 +33,7 @@ class BarangPage extends StatelessWidget {
                       foregroundColor: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 8), // Jarak antar tombol
-                  // TOMBOL REFRESH
+                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => controller.fetchBarang(),
                     icon: const Icon(Icons.refresh, color: Colors.deepPurple),
@@ -50,12 +48,10 @@ class BarangPage extends StatelessWidget {
         // --- LIST DATA BARANG (MENGGUNAKAN OBX) ---
         Expanded(
           child: Obx(() {
-            // Tampilkan loading jika data sedang diambil dan list masih kosong
             if (controller.isLoading.value && controller.listBarang.isEmpty) {
               return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
             }
 
-            // Jika data kosong
             if (controller.listBarang.isEmpty) {
               return const Center(
                 child: Text("Belum ada data barang di inventaris."),
@@ -86,12 +82,10 @@ class BarangPage extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tombol Edit
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, color: Colors.orange),
                           onPressed: () => _showFormDialog(context, controller, barang: barang),
                         ),
-                        // Tombol Hapus
                         IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.red),
                           onPressed: () => _confirmDelete(context, controller, barang),

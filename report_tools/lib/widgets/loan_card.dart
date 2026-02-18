@@ -103,7 +103,6 @@ class LoanCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Kita ganti tombol dengan label instruksi kecil
                 const Row(
                   children: [
                     Text(
