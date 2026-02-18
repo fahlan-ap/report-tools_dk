@@ -163,6 +163,7 @@ class ActivePeminjamanList extends StatelessWidget {
                     : detailBarang.map((d) => d['barang']['nama_barang']).join(', ');
 
                 return Card(
+                  color: Colors.white,
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(

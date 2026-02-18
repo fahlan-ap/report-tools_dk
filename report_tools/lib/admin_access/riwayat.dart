@@ -64,6 +64,7 @@ class RiwayatPage extends StatelessWidget {
                       }
 
                       return Card(
+                        color: Colors.white,
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ExpansionTile(
