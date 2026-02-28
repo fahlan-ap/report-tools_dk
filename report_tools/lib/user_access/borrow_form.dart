@@ -139,7 +139,7 @@ class _BorrowFormState extends State<BorrowForm> {
       body: _isLoading || _controller.isLoading.value
           ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

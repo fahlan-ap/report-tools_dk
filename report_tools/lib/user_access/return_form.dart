@@ -82,7 +82,7 @@ class _ReturnFormState extends State<ReturnForm> {
       body: _isSubmitting || _controller.isLoading.value
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

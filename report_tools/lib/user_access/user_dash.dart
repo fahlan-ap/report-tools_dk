@@ -4,6 +4,7 @@ import '../controllers/user_controller.dart';
 import 'borrow_form.dart';
 import 'return_form.dart'; 
 import '../widgets/loan_card.dart';
+import '../widgets/empty_state.dart'; // Menggunakan widget yang sama dengan admin
 import 'profile.dart';
 
 class UserDash extends StatelessWidget {
@@ -15,110 +16,136 @@ class UserDash extends StatelessWidget {
     final UserController controller = Get.put(UserController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: const Color(0xFFF8F9FE), // Background cerah & modern
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Obx(() {
-          final displayName = controller.userProfile['nama_lengkap'] ?? "User";
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Halo, $displayName 👋",
-                style: const TextStyle(color: Colors.black87, fontSize: 14)),
-              const Text("Dashboard Inventaris",
-                style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold, fontSize: 18)),
-            ],
-          );
-        }),
+        toolbarHeight: 90, // Disamakan dengan Admin Dash
+        title: Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Obx(() {
+            final displayName = controller.userProfile['nama_lengkap'] ?? "User";
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Halo, $displayName 👋",
+                  style: TextStyle(
+                    color: Colors.grey.shade600, 
+                    fontSize: 13, 
+                    letterSpacing: 0.5
+                  ),
+                ),
+                const Text(
+                  "Dashboard Inventaris",
+                  style: TextStyle(
+                    color: Color(0xFF2D2D2D), 
+                    fontWeight: FontWeight.w900, 
+                    fontSize: 15
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
         actions: [
-          IconButton(
-            onPressed: () => Get.to(() => const ProfileScreen()),
-            icon: const CircleAvatar(
-              backgroundColor: Colors.deepPurple,
-              child: Icon(Icons.person, color: Colors.white, size: 20),
+          // Profile Button Modern
+          Container(
+            margin: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: IconButton(
+              onPressed: () => Get.to(() => const ProfileScreen()),
+              icon: const Icon(Icons.person_outline_rounded, color: Colors.deepPurple, size: 24),
+              tooltip: "Profil",
             ),
           ),
-          const SizedBox(width: 10),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () => controller.fetchUserDashboard(),
-        child: Obx(() {
-          if (controller.isLoading.value && controller.listPeminjamanAktif.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
-          }
-
-          final loans = controller.listPeminjamanAktif;
-
-          if (loans.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: loans.length,
-            itemBuilder: (context, index) {
-              final Map<String, dynamic> loan = loans[index];
-
-              // Parsing Data UI
-              final namaSekolah = loan['sekolah']?['nama_sekolah'] ?? 'Sekolah Tidak Diketahui';
-              final List<dynamic> details = loan['detail_peminjaman'] ?? [];
-              final String namaBarangDisplay = details.isEmpty 
-                  ? "Tanpa Item" 
-                  : details.map((d) => d['barang']?['nama_barang'] ?? 'Item Dihapus').join(", ");
-
-              final String tglRaw = loan['waktu_pinjam'] ?? "";
-              final String tglDisplay = tglRaw.length >= 10 
-                  ? tglRaw.substring(0, 10).split('-').reversed.join('/') 
-                  : "-";
-
-              return GestureDetector(
-                onTap: () => Get.to(() => ReturnForm(loanData: loan)),
-                child: LoanCard(
-                  itemName: namaBarangDisplay,
-                  schoolName: namaSekolah,
-                  date: tglDisplay,
-                  status: loan['status'] ?? 'berlangsung',
-                  isOverdue: false, 
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
+              child: Text(
+                "Peminjaman Berlangsung",
+                style: TextStyle(
+                  fontSize: 16, 
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2D2D2D)
                 ),
-              );
-            },
-          );
-        }),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => const BorrowForm()),
-        label: const Text("Pinjam Baru"),
-        icon: const Icon(Icons.add),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        Center(
-          child: Column(
-            children: [
-              Icon(Icons.inventory_2_outlined, 
-                size: 80, 
-                color: Colors.deepPurple.withOpacity(0.1)
               ),
-              const SizedBox(height: 16),
-              const Text("Tidak ada peminjaman aktif", 
-                style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text("Data yang dikembalikan akan pindah ke riwayat.", 
-                style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value && controller.listPeminjamanAktif.isEmpty) {
+                  return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+                }
+
+                if (controller.listPeminjamanAktif.isEmpty) {
+                  return const EmptyState(message: "Tidak ada peminjaman aktif");
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                  itemCount: controller.listPeminjamanAktif.length,
+                  itemBuilder: (context, index) {
+                    final Map<String, dynamic> loan = controller.listPeminjamanAktif[index];
+
+                    // Parsing Data UI
+                    final namaSekolah = loan['sekolah']?['nama_sekolah'] ?? 'Sekolah';
+                    final List<dynamic> details = loan['detail_peminjaman'] ?? [];
+                    final String namaBarangDisplay = details.isEmpty 
+                        ? "Tanpa Item" 
+                        : details.map((d) => d['barang']?['nama_barang'] ?? 'Item').join(", ");
+
+                    final String tglRaw = loan['waktu_pinjam'] ?? "";
+                    final String tglDisplay = tglRaw.length >= 10 
+                        ? tglRaw.substring(0, 10).split('-').reversed.join('/') 
+                        : "-";
+
+                    return LoanCard(
+                      itemName: namaBarangDisplay,
+                      schoolName: namaSekolah,
+                      date: tglDisplay,
+                      status: loan['status'] ?? 'berlangsung',
+                      isOverdue: false, 
+                      onTap: () => Get.to(() => ReturnForm(loanData: loan)),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+      // Floating Action Button yang dirampingkan (Sama dengan Admin Dash)
+      floatingActionButton: Positioned(
+        bottom: 20,
+        right: 20,
+        child: SizedBox(
+          height: 50,
+          child: FloatingActionButton.extended(
+            onPressed: () => Get.to(() => const BorrowForm()),
+            label: const Text("Pinjam Baru", style: TextStyle(fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.add_rounded),
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+            elevation: 2,
           ),
         ),
-      ],
+      ),
     );
   }
 }

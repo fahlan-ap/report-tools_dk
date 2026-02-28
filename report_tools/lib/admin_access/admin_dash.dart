@@ -6,6 +6,8 @@ import 'package:report_tools/admin_access/user.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/dash_controller.dart';
 import '../components/custom_bottom_nav.dart';
+import '../widgets/modern_card.dart'; // Widget yang sudah dipisah
+import '../widgets/empty_state.dart'; // Widget yang sudah dipisah
 import 'riwayat.dart';
 
 class AdminDash extends StatefulWidget {
@@ -30,51 +32,93 @@ class _AdminDashState extends State<AdminDash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Panel Administrasi",
-              style: TextStyle(color: Colors.black87, fontSize: 12),
-            ),
-            Text(
-              "Admin Dashboard",
-              style: TextStyle(
-                color: Colors.deepPurple, 
-                fontWeight: FontWeight.bold, 
-                fontSize: 18
+        title: Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Panel Administrasi",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-          ],
+              const Text(
+                "Admin Dashboard",
+                style: TextStyle(
+                  color: Color(0xFF2D2D2D),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
-          IconButton(
-            onPressed: () => authC.logout(),
-            icon: const CircleAvatar(
-              backgroundColor: Color(0xFFFFEBEE),
-              child: Icon(Icons.logout, color: Colors.redAccent, size: 20),
-            ),
-            tooltip: "Logout",
-          ),
-          const SizedBox(width: 10),
+          _buildLogoutButton(),
         ],
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: CustomBottomNav(
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _selectedIndex = index),
       ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Container(
+      margin: const EdgeInsets.only(right: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: () => _confirmLogout(),
+        icon: const Icon(
+          Icons.logout_rounded,
+          color: Colors.redAccent,
+          size: 22,
+        ),
+        tooltip: "Logout",
+      ),
+    );
+  }
+
+  void _confirmLogout() {
+    Get.defaultDialog(
+      title: "Konfirmasi Keluar",
+      titleStyle: const TextStyle(
+        fontWeight: FontWeight.w900,
+        fontSize: 18,
+        color: Color.fromARGB(255, 27, 10, 10),
+      ),
+      middleText: "Anda yakin ingin Logout dari sesi Admin?",
+      middleTextStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+      textConfirm: "Keluar",
+      textCancel: "Batal",
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.redAccent,
+      cancelTextColor: Colors.grey,
+      radius: 20,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      onConfirm: () {
+        Get.back();
+        authC.logout();
+      },
     );
   }
 }
@@ -84,137 +128,51 @@ class ActivePeminjamanList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Memastikan Controller terinisialisasi
     final adminC = Get.put(DashController());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Peminjaman Berlangsung",
-                style: TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87
-                ),
-              ),
-              IconButton(
-                onPressed: () => adminC.fetchPeminjamanAktif(),
-                icon: const Icon(Icons.refresh, color: Colors.deepPurple),
-                tooltip: "Muat ulang data",
-              ),
-            ],
-          ),
-        ),
-
-        // --- LIST DATA MENGGUNAKAN OBX ---
+        _buildHeader(adminC),
         Expanded(
           child: Obx(() {
             if (adminC.isLoading.value && adminC.listPeminjamanAktif.isEmpty) {
-              return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.deepPurple),
+              );
             }
 
-            final data = adminC.listPeminjamanAktif;
-
-            if (data.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.inventory_2_outlined, 
-                        size: 100, 
-                        color: Colors.deepPurple.withOpacity(0.1)
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "tidak ada peminjaman alat inventaris yang berlangsung",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14, 
-                          color: Colors.grey, 
-                          fontWeight: FontWeight.w500
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (adminC.listPeminjamanAktif.isEmpty) {
+              return const EmptyState(
+                message: "Tidak ada peminjaman berlangsung",
               );
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: data.length,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              itemCount: adminC.listPeminjamanAktif.length,
               itemBuilder: (context, index) {
-                final item = data[index];
-                
-                final namaUser= item['profiles']?['nama_lengkap'] ?? 'User';
-                final namaSekolah = item['sekolah']?['nama_sekolah'] ?? 'Sekolah';
-                
-                final List detailBarang = item['detail_peminjaman'] ?? [];
-                final String semuaBarang = detailBarang.isEmpty 
-                    ? "Tidak ada data barang" 
-                    : detailBarang.map((d) => d['barang']['nama_barang']).join(', ');
+                final item = adminC.listPeminjamanAktif[index];
 
-                return Card(
-                  color: Colors.white,
-                  elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.shade200)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.deepPurple.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(12)
-                              ),
-                              child: const Icon(Icons.person, color: Colors.deepPurple, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                namaUser, 
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 15,
-                                  color: Colors.black87
-                                )
-                              ),
-                            ),
-                            const Icon(Icons.timer_outlined, color: Colors.orange, size: 18),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Divider(height: 1, thickness: 0.5),
-                        ),
-                        _buildDetailRow(Icons.inventory_2_outlined, "Barang", semuaBarang),
-                        const SizedBox(height: 8),
-                        _buildDetailRow(Icons.school_outlined, "Tujuan", namaSekolah),
-                        const SizedBox(height: 8),
-                        _buildDetailRow(
-                          Icons.access_time, 
-                          "Waktu", 
-                          item['waktu_pinjam'].toString().substring(0, 16).replaceAll('T', ' ')
-                        ),
-                      ],
-                    ),
-                  ),
+                // Parsing Data
+                final namaUser = item['profiles']?['nama_lengkap'] ?? 'User';
+                final namaSekolah =
+                    item['sekolah']?['nama_sekolah'] ?? 'Sekolah';
+                final List detail = item['detail_peminjaman'] ?? [];
+                final String barang = detail.isEmpty
+                    ? "Tanpa data barang"
+                    : detail.map((d) => d['barang']['nama_barang']).join(', ');
+                final String waktu = item['waktu_pinjam']
+                    .toString()
+                    .substring(0, 16)
+                    .replaceAll('T', ' ');
+
+                return ModernCard(
+                  user: namaUser,
+                  barang: barang,
+                  sekolah: namaSekolah,
+                  waktu: waktu,
                 );
               },
             );
@@ -224,24 +182,38 @@ class ActivePeminjamanList extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14, color: Colors.deepPurple.withOpacity(0.5)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
-              children: [
-                TextSpan(text: "$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: text),
-              ],
+  Widget _buildHeader(DashController adminC) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "Peminjaman Aktif",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2D2D2D),
             ),
           ),
-        ),
-      ],
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => adminC.fetchPeminjamanAktif(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.refresh_rounded,
+                color: Colors.deepPurple,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ class LoanCard extends StatelessWidget {
   final String date;
   final String status;
   final bool isOverdue;
+  final VoidCallback? onTap;
 
   const LoanCard({
     super.key,
@@ -14,111 +15,151 @@ class LoanCard extends StatelessWidget {
     required this.date,
     required this.status,
     this.isOverdue = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
           children: [
-            Row(
-              children: [
-                // Icon Container
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.inventory_2_outlined,
-                    color: Colors.deepPurple,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                
-                // Info Text
-                Expanded(
+            // Gari Aksen di Samping (Merah jika telat, Ungu jika normal)
+            Positioned(
+              left: 0, top: 0, bottom: 0,
+              child: Container(
+                width: 4, 
+                color: isOverdue ? Colors.redAccent : Colors.deepPurpleAccent
+              ),
+            ),
+            
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        itemName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      Row(
+                        children: [
+                          // Icon Container Compact
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: (isOverdue ? Colors.red : Colors.deepPurple).withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.inventory_2_rounded,
+                              size: 20,
+                              color: isOverdue ? Colors.redAccent : Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          
+                          // Info Text
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  itemName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: Color(0xFF2D2D2D),
+                                  ),
+                                ),
+                                Text(
+                                  schoolName,
+                                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          // Status Badge Compact
+                          _buildStatusBadge(),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        schoolName,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1, thickness: 0.5),
+                      ),
+                      
+                      // Footer Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey[400]),
+                              const SizedBox(width: 6),
+                              Text(
+                                date,
+                                style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          const Row(
+                            children: [
+                              Text(
+                                "Kembalikan",
+                                style: TextStyle(
+                                  fontSize: 11, 
+                                  color: Colors.deepPurple,
+                                  fontWeight: FontWeight.w700
+                                ),
+                              ),
+                              Icon(Icons.chevron_right_rounded, size: 16, color: Colors.deepPurple),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isOverdue
-                        ? Colors.red.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status.toUpperCase(),
-                    style: TextStyle(
-                      color: isOverdue ? Colors.red : Colors.orange[800],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_month, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Pinjam: $date",
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const Row(
-                  children: [
-                    Text(
-                      "Ketuk untuk kembali",
-                      style: TextStyle(
-                        fontSize: 11, 
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.w500
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, size: 16, color: Colors.deepPurple),
-                  ],
-                ),
-              ],
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isOverdue ? Colors.red.shade50 : Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isOverdue ? Colors.red.shade100 : Colors.orange.shade100,
+        ),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          color: isOverdue ? Colors.redAccent : Colors.orange[800],
+          fontWeight: FontWeight.w900,
+          fontSize: 9,
         ),
       ),
     );
