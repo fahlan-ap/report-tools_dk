@@ -8,16 +8,14 @@ class BarangPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisiasi Controller
     final controller = Get.put(BarangController());
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Mengikuti background AdminDash
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           Column(
             children: [
-              // --- HEADER HALAMAN ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
                 child: Row(
@@ -36,7 +34,6 @@ class BarangPage extends StatelessWidget {
                 ),
               ),
 
-              // --- LIST DATA BARANG (MENGGUNAKAN OBX) ---
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value && controller.listBarang.isEmpty) {
@@ -48,7 +45,7 @@ class BarangPage extends StatelessWidget {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100), // Padding bawah untuk FAB
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                     itemCount: controller.listBarang.length,
                     itemBuilder: (context, index) {
                       final barang = controller.listBarang[index];
@@ -60,7 +57,6 @@ class BarangPage extends StatelessWidget {
             ],
           ),
 
-          // --- FLOATING ACTION BUTTON (MANUAL POSITION) ---
           Positioned(
             bottom: 20,
             right: 20,
@@ -82,13 +78,12 @@ class BarangPage extends StatelessWidget {
     );
   }
 
-  // --- WIDGET HELPER: CARD BARANG ---
   Widget _buildBarangCard(BuildContext context, BarangController controller, Map barang) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8), // Margin antar card dipersempit
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // Lebih ramping
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -98,10 +93,10 @@ class BarangPage extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        dense: true, // Membuat ListTile lebih compact secara otomatis
+        dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         leading: Container(
-          padding: const EdgeInsets.all(8), // Padding icon diperkecil
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.blue.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
@@ -110,7 +105,7 @@ class BarangPage extends StatelessWidget {
         ),
         title: Text(
           barang['nama_barang'] ?? "-",
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), // Font dikecilkan
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Text(
           "ID: ${barang['id'].toString().toUpperCase().substring(0, 8)}",
@@ -124,7 +119,7 @@ class BarangPage extends StatelessWidget {
               color: Colors.orange,
               onTap: () => _showFormDialog(context, controller, barang: barang),
             ),
-            const SizedBox(width: 4), // Jarak antar tombol dipersempit
+            const SizedBox(width: 4),
             _buildActionIcon(
               icon: Icons.delete_sweep_rounded,
               color: Colors.redAccent,
@@ -136,18 +131,17 @@ class BarangPage extends StatelessWidget {
     );
   }
 
-  // Sesuaikan juga ukuran action icon agar tidak terlalu besar
   Widget _buildActionIcon({required IconData icon, required Color color, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.all(6), // Padding tombol aksi diperkecil
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: color, size: 18), // Icon diperkecil
+        child: Icon(icon, color: color, size: 18),
       ),
     );
   }
@@ -167,7 +161,6 @@ class BarangPage extends StatelessWidget {
     );
   }
 
-  // --- DIALOG FORM (TAMBAH & EDIT) ---
   void _showFormDialog(BuildContext context, BarangController controller, {Map? barang}) {
     bool isEdit = barang != null;
     
@@ -225,7 +218,6 @@ class BarangPage extends StatelessWidget {
     );
   }
 
-  // --- DIALOG KONFIRMASI HAPUS ---
   void _confirmDelete(BuildContext context, BarangController controller, Map barang) {
     Get.defaultDialog(
       title: "Hapus Barang",

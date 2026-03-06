@@ -17,10 +17,10 @@ class ModernCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12), // Jarak antar card lebih rapat
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // Radius lebih kecil agar terlihat compact
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -43,7 +43,6 @@ class ModernCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      // Avatar lebih kecil
                       CircleAvatar(
                         radius: 18, 
                         backgroundColor: Colors.deepPurple.withOpacity(0.1),
@@ -67,7 +66,6 @@ class ModernCard extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Divider(height: 1, thickness: 0.5),
                   ),
-                  // Data rows dengan spacing lebih rapat
                   _buildDataRow(Icons.inventory_2_rounded, "Barang", barang, Colors.blue),
                   const SizedBox(height: 8),
                   _buildDataRow(Icons.location_on_rounded, "Tujuan", sekolah, Colors.orange),

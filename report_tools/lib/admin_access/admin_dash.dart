@@ -5,9 +5,9 @@ import 'package:report_tools/admin_access/sekolah.dart';
 import 'package:report_tools/admin_access/user.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/dash_controller.dart';
-import '../components/custom_bottom_nav.dart';
-import '../widgets/modern_card.dart'; // Widget yang sudah dipisah
-import '../widgets/empty_state.dart'; // Widget yang sudah dipisah
+import '../widgets/custom_bottom_nav.dart';
+import '../widgets/modern_card.dart';
+import '../widgets/empty_state.dart';
 import 'riwayat.dart';
 
 class AdminDash extends StatefulWidget {
@@ -128,7 +128,6 @@ class ActivePeminjamanList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Memastikan Controller terinisialisasi
     final adminC = Get.put(DashController());
 
     return Column(
@@ -155,7 +154,6 @@ class ActivePeminjamanList extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = adminC.listPeminjamanAktif[index];
 
-                // Parsing Data
                 final namaUser = item['profiles']?['nama_lengkap'] ?? 'User';
                 final namaSekolah =
                     item['sekolah']?['nama_sekolah'] ?? 'Sekolah';

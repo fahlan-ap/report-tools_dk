@@ -21,7 +21,6 @@ class _ReturnFormState extends State<ReturnForm> {
   XFile? _pickedImage;
   bool _isSubmitting = false;
 
-  // Ambil Foto
   Future<void> _handlePickImage() async {
     final XFile? image = await _controller.pickImage(context);
     if (image != null) {
@@ -29,7 +28,6 @@ class _ReturnFormState extends State<ReturnForm> {
     }
   }
 
-  // Konfirmasi Pengembalian
   Future<void> _submitReturn() async {
     if (_pickedImage == null) {
       Get.snackbar(
@@ -66,7 +64,6 @@ class _ReturnFormState extends State<ReturnForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Parsing data UI
     final List details = widget.loanData['detail_peminjaman'] ?? [];
     final String daftarBarang = details.map((d) => d['barang']?['nama_barang'] ?? 'Item').join(", ");
     final String namaSekolah = widget.loanData['sekolah']?['nama_sekolah'] ?? 'Sekolah';

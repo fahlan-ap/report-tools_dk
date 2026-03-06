@@ -147,7 +147,6 @@ class _BorrowFormState extends State<BorrowForm> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   
-                  // 1. Dropdown Sekolah
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: "Sekolah Tujuan", 
@@ -162,7 +161,6 @@ class _BorrowFormState extends State<BorrowForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Multi Select Barang
                   InkWell(
                     onTap: _showItemSelectionDialog,
                     child: InputDecorator(
@@ -193,7 +191,6 @@ class _BorrowFormState extends State<BorrowForm> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
 
-                  // 3. Area Foto
                   _pickedImage != null
                       ? Stack(
                           children: [
@@ -230,7 +227,6 @@ class _BorrowFormState extends State<BorrowForm> {
 
                   const SizedBox(height: 32),
                   
-                  // Tombol Ajukan
                   SizedBox(
                     width: double.infinity,
                     height: 50,

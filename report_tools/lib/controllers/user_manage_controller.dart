@@ -8,11 +8,9 @@ class UserManageController extends GetxController {
 
   var listUser = <Map<String, dynamic>>[].obs;
 
-  // Controllers Login (Auth)
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Controllers Data Profil (Profiles)
   final TextEditingController namaController = TextEditingController();
   final TextEditingController nipController = TextEditingController();
 
@@ -24,7 +22,6 @@ class UserManageController extends GetxController {
     fetchUsers();
   }
 
-  // --- FUNGSI FETCH DATA (REFRESH) ---
   Future<void> fetchUsers() async {
     try {
       isLoading.value = true;
@@ -45,7 +42,6 @@ class UserManageController extends GetxController {
     }
   }
 
-  // --- LANGKAH 1: Membuat Akun Auth ---
   Future<bool> createAuthAccount() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       Get.snackbar("Peringatan", "Email dan Password wajib diisi");
@@ -73,7 +69,6 @@ class UserManageController extends GetxController {
     }
   }
 
-  // --- LANGKAH 2: Mengisi Data Profiles ---
   Future<void> saveProfile() async {
     if (tempUid == null) return;
 
@@ -104,7 +99,6 @@ class UserManageController extends GetxController {
     }
   }
 
-  // Fungsi Update User (Hanya Profil)
   Future<void> updateUser(String id) async {
     if (namaController.text.isEmpty || nipController.text.isEmpty) {
       Get.snackbar("Peringatan", "Data tidak boleh kosong");
@@ -121,7 +115,6 @@ class UserManageController extends GetxController {
       _clearAll();
       Get.back();
       
-      // REFRESH DATA
       fetchUsers();
       
       Get.snackbar("Sukses", "Data user berhasil diperbarui");
@@ -132,7 +125,6 @@ class UserManageController extends GetxController {
     }
   }
 
-  // Fungsi Hapus User
   Future<void> deleteUser(String id) async {
     try {
       await supabase.from('profiles').delete().eq('id', id);

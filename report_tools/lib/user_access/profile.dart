@@ -12,7 +12,7 @@ class ProfileScreen extends StatelessWidget {
     final UserController controller = Get.find<UserController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE), // Background konsisten
+      backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
         title: const Text(
           "Profil Saya",
@@ -43,7 +43,6 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              // --- HEADER PROFILE (MODERN) ---
               Center(
                 child: Column(
                   children: [
@@ -99,7 +98,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 35),
 
-              // --- INFO DETAIL (COMPACT CARDS) ---
               _buildProfileCard(
                 icon: Icons.badge_rounded,
                 label: "Nomor Induk Pegawai (NIP)",
@@ -116,7 +114,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // --- TOMBOL LOGOUT (MODERN) ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(

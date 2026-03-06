@@ -8,16 +8,14 @@ class SekolahPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisiasi Controller
     final controller = Get.put(SekolahController());
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Mengikuti background AdminDash
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           Column(
             children: [
-              // --- HEADER HALAMAN ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
                 child: Row(
@@ -36,7 +34,6 @@ class SekolahPage extends StatelessWidget {
                 ),
               ),
 
-              // --- LIST DATA SEKOLAH (MENGGUNAKAN OBX) ---
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value && controller.listSekolah.isEmpty) {
@@ -48,7 +45,7 @@ class SekolahPage extends StatelessWidget {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100), // Padding bawah untuk FAB
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                     itemCount: controller.listSekolah.length,
                     itemBuilder: (context, index) {
                       final sekolah = controller.listSekolah[index];
@@ -60,7 +57,6 @@ class SekolahPage extends StatelessWidget {
             ],
           ),
 
-          // --- FLOATING ACTION BUTTON (COMPACT VERSION) ---
           Positioned(
             bottom: 20,
             right: 20,
@@ -85,7 +81,6 @@ class SekolahPage extends StatelessWidget {
     );
   }
 
-  // --- WIDGET HELPER: CARD SEKOLAH (COMPACT) ---
   Widget _buildSekolahCard(BuildContext context, SekolahController controller, Map sekolah) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -169,7 +164,6 @@ class SekolahPage extends StatelessWidget {
     );
   }
 
-  // --- DIALOG FORM (TAMBAH & EDIT) ---
   void _showFormDialog(BuildContext context, SekolahController controller, {Map? sekolah}) {
     bool isEdit = sekolah != null;
     if (isEdit) {
@@ -218,7 +212,6 @@ class SekolahPage extends StatelessWidget {
     );
   }
 
-  // --- DIALOG KONFIRMASI HAPUS ---
   void _confirmDelete(BuildContext context, SekolahController controller, Map sekolah) {
     Get.defaultDialog(
       title: "Hapus Sekolah",

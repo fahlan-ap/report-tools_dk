@@ -16,7 +16,6 @@ class BarangController extends GetxController {
     fetchBarang();
   }
 
-  // --- FUNGSI FETCH DATA (REFRESH) ---
   Future<void> fetchBarang() async {
     try {
       isLoading.value = true;
@@ -41,7 +40,6 @@ class BarangController extends GetxController {
     }
   }
 
-  // Fungsi Tambah Barang
   Future<void> addBarang() async {
     if (namaBarangController.text.isEmpty) {
       Get.snackbar("Peringatan", "Data tidak boleh kosong");
@@ -70,7 +68,6 @@ class BarangController extends GetxController {
     }
   }
 
-  // Fungsi Edit Barang
   Future<void> updateBarang(String id) async {
     if (namaBarangController.text.isEmpty) {
       Get.snackbar("Peringatan", "Data tidak boleh kosong");
@@ -102,7 +99,6 @@ class BarangController extends GetxController {
     }
   }
 
-  // Fungsi Hapus Barang
   Future<void> deleteBarang(String id) async {
     try {
       await supabase.from('barang').delete().eq('id', id);

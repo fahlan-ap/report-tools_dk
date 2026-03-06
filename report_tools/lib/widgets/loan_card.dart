@@ -37,7 +37,6 @@ class LoanCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Gari Aksen di Samping (Merah jika telat, Ungu jika normal)
             Positioned(
               left: 0, top: 0, bottom: 0,
               child: Container(
@@ -56,7 +55,6 @@ class LoanCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          // Icon Container Compact
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -71,7 +69,6 @@ class LoanCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           
-                          // Info Text
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +91,6 @@ class LoanCard extends StatelessWidget {
                             ),
                           ),
                           
-                          // Status Badge Compact
                           _buildStatusBadge(),
                         ],
                       ),
@@ -104,7 +100,6 @@ class LoanCard extends StatelessWidget {
                         child: Divider(height: 1, thickness: 0.5),
                       ),
                       
-                      // Footer Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

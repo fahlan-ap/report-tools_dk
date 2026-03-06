@@ -18,7 +18,6 @@ class RiwayatController extends GetxController {
     try {
       isLoading.value = true;
       
-      // Fetch Data Riwayat
       final response = await supabase
           .from('riwayat')
           .select('*')
@@ -26,7 +25,6 @@ class RiwayatController extends GetxController {
 
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
-      // Day Based Sorting
       Map<String, List<Map<String, dynamic>>> tempGrouped = {};
       
       for (var item in data) {

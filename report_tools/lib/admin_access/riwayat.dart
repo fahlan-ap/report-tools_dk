@@ -14,7 +14,6 @@ class RiwayatPage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          // --- HEADER ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
             child: Row(
@@ -33,7 +32,6 @@ class RiwayatPage extends StatelessWidget {
             ),
           ),
 
-          // --- LIST RIWAYAT ---
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value && controller.groupedRiwayat.isEmpty) {
@@ -68,7 +66,6 @@ class RiwayatPage extends StatelessWidget {
     );
   }
 
-  // Header Tanggal (Sticky-like label)
   Widget _buildDateHeader(String label) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 10, top: 5),
@@ -89,7 +86,6 @@ class RiwayatPage extends StatelessWidget {
     );
   }
 
-  // Card Riwayat Compact dengan ExpansionTile
   Widget _buildRiwayatCard(Map<String, dynamic> item) {
     String jam = item['waktu_kembali'] != null 
         ? item['waktu_kembali'].toString().substring(11, 16) 

@@ -4,7 +4,7 @@ import '../controllers/user_controller.dart';
 import 'borrow_form.dart';
 import 'return_form.dart'; 
 import '../widgets/loan_card.dart';
-import '../widgets/empty_state.dart'; // Menggunakan widget yang sama dengan admin
+import '../widgets/empty_state.dart';
 import 'profile.dart';
 
 class UserDash extends StatelessWidget {
@@ -12,15 +12,14 @@ class UserDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi Controller
     final UserController controller = Get.put(UserController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE), // Background cerah & modern
+      backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 90, // Disamakan dengan Admin Dash
+        toolbarHeight: 90,
         title: Padding(
           padding: const EdgeInsets.only(left: 8.0),
           child: Obx(() {
@@ -49,7 +48,6 @@ class UserDash extends StatelessWidget {
           }),
         ),
         actions: [
-          // Profile Button Modern
           Container(
             margin: const EdgeInsets.only(right: 20),
             decoration: BoxDecoration(
@@ -103,7 +101,6 @@ class UserDash extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final Map<String, dynamic> loan = controller.listPeminjamanAktif[index];
 
-                    // Parsing Data UI
                     final namaSekolah = loan['sekolah']?['nama_sekolah'] ?? 'Sekolah';
                     final List<dynamic> details = loan['detail_peminjaman'] ?? [];
                     final String namaBarangDisplay = details.isEmpty 
@@ -130,7 +127,6 @@ class UserDash extends StatelessWidget {
           ],
         ),
       ),
-      // Floating Action Button yang dirampingkan (Sama dengan Admin Dash)
       floatingActionButton: Positioned(
         bottom: 20,
         right: 20,

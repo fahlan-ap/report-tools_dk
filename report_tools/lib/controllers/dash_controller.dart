@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class DashController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
   
-  // State Management UI
   var isLoading = false.obs;
   var listPeminjamanAktif = <Map<String, dynamic>>[].obs;
 
@@ -14,7 +13,6 @@ class DashController extends GetxController {
     fetchPeminjamanAktif(); 
   }
 
-  // --- FUNGSI UTAMA FETCH DATA ---
   Future<void> fetchPeminjamanAktif() async {
     try {
       isLoading.value = true;

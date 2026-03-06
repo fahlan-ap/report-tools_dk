@@ -9,7 +9,6 @@ class UserController extends GetxController {
   final supabase = Supabase.instance.client;
   final ImagePicker _picker = ImagePicker();
 
-  // --- STATE MANAGEMENT ---
   var isLoading = false.obs;
   var listPeminjamanAktif = <Map<String, dynamic>>[].obs;
   var userProfile = <String, dynamic>{}.obs;
@@ -21,10 +20,8 @@ class UserController extends GetxController {
     fetchUserProfile();
   }
 
-  // --- AUTH HELPER ---
   User? get currentUser => supabase.auth.currentUser;
 
-  // --- MASTER DATA ---
   Future<List<Map<String, dynamic>>> getBarangList() async {
     final response = await supabase
         .from('barang')
@@ -41,7 +38,6 @@ class UserController extends GetxController {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // --- IMAGE PICKER ---
   Future<XFile?> pickImage(BuildContext context) async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -84,7 +80,6 @@ class UserController extends GetxController {
     return null;
   }
 
-  // --- FUNGSI FETCH DASHBOARD USER ---
   Future<void> fetchUserDashboard() async {
     final user = currentUser;
     if (user == null) return;
@@ -113,7 +108,6 @@ class UserController extends GetxController {
     }
   }
 
-  // --- SUBMIT PEMINJAMAN ---
   Future<void> submitPeminjaman({
     required String sekolahId,
     required List<String> barangIds,
@@ -161,7 +155,6 @@ class UserController extends GetxController {
     }
   }
 
-  // --- SUBMIT PENGEMBALIAN ---
   Future<void> submitPengembalian({
     required Map<String, dynamic> loanData,
     required XFile fotoBuktiKembali,

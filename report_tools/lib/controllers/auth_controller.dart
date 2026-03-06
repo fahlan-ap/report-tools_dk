@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 
 class AuthController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
-  final box = GetStorage(); // Inisialisasi storage lokal
+  final box = GetStorage();
 
   var isLoading = false.obs;
 
@@ -18,7 +18,6 @@ class AuthController extends GetxController {
       );
 
       if (res.user != null) {
-        // Ambil data profile untuk mendapatkan role
         final data = await supabase
             .from('profiles')
             .select()
@@ -27,10 +26,8 @@ class AuthController extends GetxController {
 
         String role = data['role'];
 
-        // Simpan role ke storage lokal agar bisa diakses kapan saja
         box.write('role', role);
 
-        // Navigasi berdasarkan role
         if (role == 'admin') {
           Get.offAllNamed('/admin-dashboard');
         } else {
@@ -57,11 +54,8 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
-      // Hapus cache role di lokal
       box.remove('role');
-      // Logout dari Supabase
       await supabase.auth.signOut();
-      // Kembali ke halaman login
       Get.offAllNamed('/login');
     } catch (e) {
       Get.snackbar('Error', 'Gagal logout: $e');

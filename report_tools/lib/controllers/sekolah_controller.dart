@@ -16,7 +16,6 @@ class SekolahController extends GetxController {
     fetchSekolah();
   }
 
-  // --- FUNGSI FETCH DATA (REFRESH) ---
   Future<void> fetchSekolah() async {
     try {
       isLoading.value = true;
@@ -41,7 +40,6 @@ class SekolahController extends GetxController {
     }
   }
 
-  // Fungsi Tambah Sekolah
   Future<void> addSekolah() async {
     if (namaSekolahController.text.isEmpty) {
       Get.snackbar("Peringatan", "Nama Sekolah tidak boleh kosong");
@@ -70,7 +68,6 @@ class SekolahController extends GetxController {
     }
   }
 
-  // Fungsi Edit Sekolah
   Future<void> updateSekolah(String id) async {
     if (namaSekolahController.text.isEmpty) {
       Get.snackbar("Peringatan", "Nama sekolah tidak boleh kosong");
@@ -100,7 +97,6 @@ class SekolahController extends GetxController {
     }
   }
 
-  // Fungsi Hapus Sekolah
   Future<void> deleteSekolah(String id) async {
     try {
       await supabase.from('sekolah').delete().eq('id', id);
